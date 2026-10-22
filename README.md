@@ -36,7 +36,7 @@ Private images ◀─GET /api/assets?path=──────  ownership check + 
 
 | Service | Used for | Key |
 |---|---|---|
-| **Groq** (`llama-3.3-70b-versatile`) | Default fast text: keyword ideas, scoring, slide copy, captions (JSON mode) | `GROQ_API_KEY` |
+| **Groq** (`openai/gpt-oss-120b`, auto-fallback to `gpt-oss-20b`) | Default fast text: keyword ideas, scoring, slide copy, captions (JSON mode) | `GROQ_API_KEY` |
 | **OpenAI** text (`gpt-4o-mini`) | Fallback / alternative text provider (`TEXT_PROVIDER=openai`) | `OPENAI_API_KEY` |
 | **OpenAI Images** (`gpt-image-1`) | Text‑free backgrounds/illustrations (1024×1536 or 1024×1024) | `OPENAI_API_KEY`, `IMAGE_PROVIDER=openai` |
 | **YouTube Data API v3** | Engagement of recent videos per keyword; trending videos by region | `YOUTUBE_API_KEY` |

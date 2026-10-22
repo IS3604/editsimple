@@ -23,11 +23,11 @@ export function ProjectCard({ p }: { p: ProjectListItem }) {
   const thumb = first?.render_path ?? null;
   const tone = p.status === "ready" ? "good" : p.status === "failed" ? "bad" : "muted";
   return (
-    <Link href={`/projects/${p.id}`} className="group overflow-hidden rounded-xl border bg-card transition hover:-translate-y-0.5 hover:shadow-lg">
+    <Link href={`/projects/${p.id}`} className="lift group overflow-hidden rounded-xl border bg-card">
       <div className="relative aspect-[4/5] overflow-hidden" style={{ background: p.design?.colors?.background ?? "#eee" }}>
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={assetUrlClient(thumb)!} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <img src={assetUrlClient(thumb)!} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
         ) : (
           <div className="grid h-full place-items-center">
             <ImageIcon className="h-8 w-8 opacity-30" />

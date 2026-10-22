@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 type BtnVariant = "default" | "accent" | "outline" | "ghost" | "destructive" | "secondary";
 const btn: Record<BtnVariant, string> = {
   default: "bg-primary text-primary-foreground hover:bg-primary/90",
-  accent: "bg-accent text-accent-foreground hover:bg-accent/90",
+  accent: "bg-accent text-accent-foreground hover:bg-accent/90 shadow-[0_8px_24px_-10px_hsl(var(--accent))] hover:shadow-[0_12px_30px_-10px_hsl(var(--accent))]",
   outline: "border bg-card hover:bg-secondary",
   ghost: "hover:bg-secondary",
   destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
@@ -23,7 +23,7 @@ export const Button = React.forwardRef<
     ref={ref}
     disabled={disabled || loading}
     className={cn(
-      "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+      "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 active:scale-[.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
       size === "sm" && "h-8 px-3 text-sm",
       size === "md" && "h-10 px-4 text-sm",
       size === "lg" && "h-12 px-6 text-base",
@@ -109,7 +109,7 @@ export function Badge({ className, tone = "default", ...p }: React.HTMLAttribute
 export function Progress({ value, className }: { value: number; className?: string }) {
   return (
     <div className={cn("h-2 w-full overflow-hidden rounded-full bg-muted", className)}>
-      <div className="h-full bg-accent transition-all" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+      <div className="h-full bg-accent transition-all duration-700 ease-out" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
     </div>
   );
 }
@@ -117,7 +117,7 @@ export function Progress({ value, className }: { value: number; className?: stri
 export function ErrorBanner({ error, onRetry }: { error: string | null; onRetry?: () => void }) {
   if (!error) return null;
   return (
-    <div role="alert" className="flex items-start justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+    <div role="alert" className="animate-scale-in flex items-start justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
       <span>{error}</span>
       {onRetry && (
         <Button size="sm" variant="outline" onClick={onRetry}>
@@ -130,7 +130,7 @@ export function ErrorBanner({ error, onRetry }: { error: string | null; onRetry?
 
 export function Empty({ title, children, action }: { title: string; children?: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="grain flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
+    <div className="grain animate-fade-in flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
       <p className="font-display text-lg font-semibold">{title}</p>
       {children && <p className="max-w-md text-sm text-muted-foreground">{children}</p>}
       {action}
@@ -140,4 +140,8 @@ export function Empty({ title, children, action }: { title: string; children?: R
 
 export function Spinner({ className }: { className?: string }) {
   return <Loader2 className={cn("h-5 w-5 animate-spin text-muted-foreground", className)} />;
+}
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("skeleton", className)} />;
 }

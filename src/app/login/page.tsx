@@ -31,15 +31,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="grain grid min-h-screen place-items-center px-4">
-      <div className="w-full max-w-sm space-y-6">
+    <main className="grain relative grid min-h-screen place-items-center overflow-hidden px-4">
+      <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 animate-float rounded-full bg-accent/25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-16 h-[28rem] w-[28rem] animate-float rounded-full bg-violet-400/20 blur-3xl [animation-delay:-7s]" />
+      <div className="stagger relative w-full max-w-sm space-y-6">
         <div className="space-y-1 text-center">
           <p className="font-display text-3xl font-extrabold">
             Edit<span className="text-accent">Simple</span>
           </p>
           <p className="text-sm text-muted-foreground">Research-backed carousels for Instagram & LinkedIn</p>
         </div>
-        <Card className="p-6">
+        <Card className="p-6 shadow-xl backdrop-blur">
           <form onSubmit={submit} className="space-y-4">
             <Field label="Email">
               <Input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />

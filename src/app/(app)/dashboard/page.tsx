@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Plus, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/app-shell";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Empty, Spinner } from "@/components/ui";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Empty, Skeleton } from "@/components/ui";
 import { ProjectCard, type ProjectListItem } from "@/components/project-card";
 import { TrendingLists } from "@/components/trending-lists";
 import { TrendIcon } from "@/components/keywords";
@@ -56,14 +56,15 @@ export default function Dashboard() {
         actions={<Link href="/create"><Button variant="accent" size="lg"><Plus className="h-4 w-4" />New carousel</Button></Link>}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ["Carousels ready", projects ? ready : null],
           ["In progress / drafts", projects ? inProgress : null],
           ["Keyword research runs", researchCount],
           ["Data sources live", cfg ? sources.filter((s) => s[1]).length + "/" + sources.length : null],
         ].map(([label, v]) => (
-          <Card key={label as string} className="p-5">
+          <Card key={label as string} className="lift relative overflow-hidden p-5">
+            <div aria-hidden className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-accent/10" />
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className="mt-1 font-display text-4xl font-bold tabular-nums">{v ?? "—"}</p>
           </Card>
@@ -76,9 +77,9 @@ export default function Dashboard() {
           <Link href="/projects" className="text-sm underline underline-offset-4">All projects</Link>
         </div>
         {projects === null ? (
-          <div className="grid h-40 place-items-center"><Spinner /></div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="aspect-[4/5]" />)}</div>
         ) : projects.length ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">{projects.slice(0, 5).map((p) => <ProjectCard key={p.id} p={p} />)}</div>
+          <div className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">{projects.slice(0, 5).map((p) => <ProjectCard key={p.id} p={p} />)}</div>
         ) : (
           <Empty title="Your first carousel is one topic away" action={<Link href="/create"><Button className="mt-3">Start</Button></Link>} />
         )}
@@ -97,7 +98,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               {recs?.rows.length ? (
-                <ul className="space-y-2">
+                <ul className="stagger space-y-2">
                   {recs.rows.map((r) => (
                     <li key={r.keyword} className="flex items-center gap-2 text-sm">
                       <span className="flex-1 truncate font-medium">{r.keyword}</span>

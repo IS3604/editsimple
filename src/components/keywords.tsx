@@ -85,7 +85,7 @@ export function KeywordTable({
             <th className="p-3">Source</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="stagger">
           {kw.map((r) => (
             <tr
               key={r.keyword}
@@ -194,7 +194,7 @@ export function HashtagPicker({ rows }: { rows: KeywordMetric[] }) {
         <p className="text-xs text-violet-700">AI-suggested · no reach data (not exposed by Instagram/LinkedIn APIs)</p>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-2">
+        <div className="stagger flex flex-wrap gap-2">
           {tags.map((t) => (
             <Badge key={t.keyword} tone="ai">{t.keyword}</Badge>
           ))}

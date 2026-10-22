@@ -4,7 +4,7 @@ import "server-only";
 export const env = {
   textProvider: (process.env.TEXT_PROVIDER ?? "groq") as "groq" | "openai",
   groqKey: process.env.GROQ_API_KEY ?? "",
-  groqModel: process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
+  groqModel: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
   openaiKey: process.env.OPENAI_API_KEY ?? "",
   openaiTextModel: process.env.OPENAI_TEXT_MODEL ?? "gpt-4o-mini",
   imageProvider: (process.env.IMAGE_PROVIDER ?? "openai") as "openai" | "none",

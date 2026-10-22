@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, ErrorBanner, Spinner } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle, ErrorBanner, Skeleton } from "@/components/ui";
 import { Sources } from "@/components/keywords";
 import { api } from "@/lib/api-client";
 import type { SourceStatus } from "@/lib/types";
@@ -26,7 +26,7 @@ export function useTrending() {
 export function TrendingLists({ limit = 25, compact = false }: { limit?: number; compact?: boolean }) {
   const { data, error, reload } = useTrending();
   if (error) return <ErrorBanner error={error} onRetry={reload} />;
-  if (!data) return <div className="grid h-40 place-items-center"><Spinner /></div>;
+  if (!data) return <div className="grid gap-4 md:grid-cols-2">{[0, 1].map((i) => <div key={i} className="space-y-3 rounded-xl border p-5">{Array.from({ length: 6 }).map((_, j) => <Skeleton key={j} className="h-5" />)}</div>)}</div>;
 
   const topicHref = (t: string) => `/keywords?topic=${encodeURIComponent(t)}`;
 
@@ -41,7 +41,7 @@ export function TrendingLists({ limit = 25, compact = false }: { limit?: number;
           </CardHeader>
           <CardContent>
             {data.wikipedia.length ? (
-              <ol className="divide-y">
+              <ol className="stagger divide-y">
                 {data.wikipedia.slice(0, limit).map((a) => (
                   <li key={a.title} className="flex items-center gap-3 py-2 text-sm">
                     <span className="w-6 text-right tabular-nums text-muted-foreground">{a.rank}</span>
@@ -60,7 +60,7 @@ export function TrendingLists({ limit = 25, compact = false }: { limit?: number;
           </CardHeader>
           <CardContent>
             {data.youtube ? (
-              <ol className="divide-y">
+              <ol className="stagger divide-y">
                 {data.youtube.slice(0, limit).map((v, i) => (
                   <li key={v.id} className="flex items-center gap-3 py-2 text-sm">
                     <span className="w-6 text-right tabular-nums text-muted-foreground">{i + 1}</span>

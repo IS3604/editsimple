@@ -123,7 +123,7 @@ export default function CreatePage() {
         <Sources sources={sources} />
         <DataNotice />
         <ErrorBanner error={error} />
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="stagger grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-4">
             <KeywordTable
               rows={rows}
@@ -166,7 +166,7 @@ export default function CreatePage() {
   return (
     <div>
       <PageHeader title="Create a carousel" subtitle="Brief → keyword research → copy → visuals → export." />
-      <form onSubmit={research} className="grid gap-6 lg:grid-cols-[1fr_420px]">
+      <form onSubmit={research} className="stagger grid gap-6 lg:grid-cols-[1fr_420px]">
         <div className="space-y-6">
           <Card>
             <CardHeader><CardTitle>Content</CardTitle></CardHeader>
@@ -250,7 +250,7 @@ export default function CreatePage() {
           </Card>
           <ErrorBanner error={error} />
           <Button type="submit" size="lg" variant="accent" className="w-full" loading={busy}>
-            {busy ? "Researching keywords…" : "Research keywords →"}
+            {busy ? "Researching keywords — checking sources…" : "Research keywords →"}
           </Button>
         </div>
       </form>

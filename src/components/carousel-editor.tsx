@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle, ArrowDown, ArrowUp, Check, Copy, Download, FileText, ImageIcon, ImagePlus, Loader2, Plus, RefreshCw, Trash2, Wand2,
 } from "lucide-react";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, ErrorBanner, Field, Input, Select, Spinner, Textarea } from "@/components/ui";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, ErrorBanner, Field, Input, Progress, Select, Skeleton, Spinner, Textarea } from "@/components/ui";
 import { ColorControls, FontControls, LogoControls, ThemePicker } from "@/components/design-controls";
 import { ScaledSlide, SlideCanvas, dims, type SlideSize } from "@/components/slide-canvas";
 import { api } from "@/lib/api-client";
@@ -347,7 +347,8 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
       <ErrorBanner error={error} />
 
       {showPipeline && (
-        <Card className="p-5">
+        <Card className={cn("relative overflow-hidden p-5 transition-all", running && "aurora border-accent/30")}>
+          <Progress value={(Math.min(pipelineIdx, 7) / 7) * 100} className="mb-4 h-1.5" />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <ol className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
               {STAGES.map((label, i) => {
@@ -355,7 +356,7 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
                 const active = i === pipelineIdx && running;
                 return (
                   <li key={label} className={cn("flex items-center gap-1.5", done ? "text-foreground" : active ? "font-semibold text-accent" : "text-muted-foreground")}>
-                    {done ? <Check className="h-4 w-4 text-emerald-600" /> : active ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="grid h-4 w-4 place-items-center rounded-full border text-[10px]">{i + 1}</span>}
+                    {done ? <Check className="h-4 w-4 animate-pop text-emerald-600" /> : active ? <span className="grid place-items-center rounded-full animate-pulse-ring"><Loader2 className="h-4 w-4 animate-spin" /></span> : <span className="grid h-4 w-4 place-items-center rounded-full border text-[10px]">{i + 1}</span>}
                     {label}{active && i === 3 && visualProgress ? ` (${visualProgress})` : ""}
                   </li>
                 );
@@ -386,22 +387,27 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
 
       {!slides.length ? (
         <Card className="grid h-72 place-items-center text-center text-muted-foreground">
-          {running ? <div className="space-y-2"><Spinner className="mx-auto h-8 w-8" /><p>Writing your carousel…</p></div> : <p>No slides yet — run generation above.</p>}
+          {running ? (
+            <div className="w-full space-y-4 p-6">
+              <div className="flex justify-center gap-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="aspect-[4/5] w-24" />)}</div>
+              <p className="animate-pulse">Writing your carousel — strategy first, then slide by slide…</p>
+            </div>
+          ) : <p>No slides yet — run generation above.</p>}
         </Card>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[150px_minmax(0,1fr)_380px]">
           {/* filmstrip */}
-          <div className="flex gap-3 overflow-x-auto pb-2 xl:flex-col xl:overflow-visible">
+          <div className="stagger flex gap-3 overflow-x-auto pb-2 xl:flex-col xl:overflow-visible">
             {slides.map((s, i) => (
               <div key={s.id} className="group relative shrink-0">
-                <button onClick={() => setSel(i)} className={cn("block overflow-hidden rounded-lg border-2 transition", i === sel ? "border-accent" : "border-transparent hover:border-border")} aria-label={`Slide ${i + 1}`}>
+                <button onClick={() => setSel(i)} className={cn("block overflow-hidden rounded-lg border-2 transition-all duration-200", i === sel ? "scale-[1.03] border-accent shadow-lg" : "border-transparent opacity-80 hover:-translate-y-0.5 hover:border-border hover:opacity-100")} aria-label={`Slide ${i + 1}`}>
                   <ScaledSlide width={128} size={size}>
                     <SlideCanvas slide={s} design={design} size={size} index={i} total={slides.length} bgUrl={assetUrlClient(s.background_path)} logoUrl={logoUrl} />
                   </ScaledSlide>
                 </button>
                 <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 text-[10px] font-semibold text-white">{i + 1}</span>
                 {overflow[s.id] && <AlertTriangle className="absolute right-1.5 top-1.5 h-4 w-4 rounded bg-amber-400 p-0.5 text-black" aria-label="Text too long" />}
-                {busySlide === s.id && <div className="absolute inset-0 grid place-items-center rounded-lg bg-white/60"><Spinner /></div>}
+                {busySlide === s.id && <div className="skeleton absolute inset-0 grid place-items-center opacity-80"><Spinner /></div>}
               </div>
             ))}
             <Button variant="outline" size="sm" className="shrink-0" onClick={() => addSlide(slides.length - 1)} disabled={slides.length >= 10 || running}><Plus className="h-4 w-4" />Add</Button>
@@ -413,7 +419,7 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
               <div className="mx-auto w-full max-w-[520px]">
                 <StageView width={520}>
                   {(wpx) => (
-                    <div className="overflow-hidden rounded-xl shadow-xl ring-1 ring-black/5">
+                    <div key={current.id} className="animate-scale-in overflow-hidden rounded-xl shadow-[0_30px_60px_-25px_rgb(0_0_0/.45)] ring-1 ring-black/5">
                       <ScaledSlide width={wpx} size={size}>
                         <SlideCanvas slide={current} design={design} size={size} index={sel} total={slides.length} bgUrl={assetUrlClient(current.background_path)} logoUrl={logoUrl} />
                       </ScaledSlide>
@@ -438,7 +444,7 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
                 <button key={t} onClick={() => setTab(t)} className={cn("flex-1 py-3 text-sm font-medium capitalize", tab === t ? "border-b-2 border-accent" : "text-muted-foreground")}>{t === "slide" ? `Slide ${sel + 1}` : "Design"}</button>
               ))}
             </div>
-            <CardContent className="space-y-4 pt-5">
+            <CardContent key={tab + (current?.id ?? "")} className="animate-fade-in space-y-4 pt-5">
               {tab === "slide" && current ? (
                 <SlideInspector
                   key={current.id}
