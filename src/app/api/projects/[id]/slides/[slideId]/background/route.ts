@@ -27,7 +27,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
     const file = form.get("file");
     if (!(file instanceof File)) throw new HttpError(400, "file is required");
     if (!ALLOWED_IMAGE.includes(file.type) || file.type === "image/svg+xml") throw new HttpError(400, "Use PNG, JPEG or WebP");
-    if (file.size > MAX_UPLOAD) throw new HttpError(400, "Max 8 MB");
+    if (file.size > MAX_UPLOAD) throw new HttpError(400, "Max 4 MB");
     bytes = Buffer.from(await file.arrayBuffer());
     mime = file.type;
     provider = "upload";

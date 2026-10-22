@@ -8,6 +8,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, ErrorBanner, F
 import { ColorControls, FontControls, LogoControls, ThemePicker } from "@/components/design-controls";
 import { ScaledSlide, SlideCanvas, dims, type SlideSize } from "@/components/slide-canvas";
 import { api } from "@/lib/api-client";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { assetUrlClient } from "@/lib/asset-url";
 import { pdfSlides, renderJpegDataUrl, renderPng, safeName, saveBlob, zipSlides } from "@/lib/export";
 import { defaultDesign } from "@/lib/themes";
@@ -144,10 +145,21 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
     return out;
   }
 
+  /** Uploads straight to Supabase Storage (own-folder RLS) — avoids Vercel's 4.5 MB body limit. */
   async function uploadRenders(rendered: { slide: Slide; blob: Blob }[]) {
-    const fd = new FormData();
-    rendered.forEach((r) => fd.append(`slide_${r.slide.id}`, new File([r.blob], `${r.slide.id}.png`, { type: "image/png" })));
-    await api(`/api/projects/${projectId}/renders`, { method: "POST", body: fd });
+    const sb = supabaseBrowser();
+    const { data } = await sb.auth.getUser();
+    if (!data.user) throw new Error("Signed out — please sign in again");
+    const stamp = Date.now();
+    const items = await Promise.all(
+      rendered.map(async (r) => {
+        const path = `${data.user!.id}/projects/${projectId}/renders/${r.slide.id}-${stamp}.png`;
+        const { error } = await sb.storage.from("editsimple").upload(path, r.blob, { contentType: "image/png", upsert: true });
+        if (error) throw new Error(`Saving render failed: ${error.message}`);
+        return { slideId: r.slide.id, path };
+      })
+    );
+    await api(`/api/projects/${projectId}/renders`, { method: "POST", json: { items } });
   }
 
   async function runPipeline(start?: Bundle) {

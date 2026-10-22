@@ -11,7 +11,7 @@ export const POST = handle(async (req: Request) => {
   const kind = String(form.get("kind") ?? "logo");
   if (!(file instanceof File)) throw new HttpError(400, "file is required");
   if (!ALLOWED_IMAGE.includes(file.type)) throw new HttpError(400, "Use PNG, JPEG, WebP or SVG");
-  if (file.size > MAX_UPLOAD) throw new HttpError(400, "Max 8 MB");
+  if (file.size > MAX_UPLOAD) throw new HttpError(400, "Max 4 MB");
   const folder = kind === "logo" ? "logos" : "uploads";
   const path = `${user.id}/${folder}/${crypto.randomUUID()}.${extFor(file.type)}`;
   await putObject(sb, path, Buffer.from(await file.arrayBuffer()), file.type);

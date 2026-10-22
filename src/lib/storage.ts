@@ -4,7 +4,7 @@ import { BUCKET } from "@/lib/supabase/server";
 import { HttpError } from "@/lib/http";
 
 export const ALLOWED_IMAGE = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
-export const MAX_UPLOAD = 8 * 1024 * 1024;
+export const MAX_UPLOAD = 4 * 1024 * 1024; // Vercel request bodies cap at 4.5 MB
 
 export async function putObject(sb: SupabaseClient, path: string, body: Buffer | Blob, contentType: string) {
   const { error } = await sb.storage.from(BUCKET).upload(path, body, { contentType, upsert: true });
