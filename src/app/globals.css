@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 97%;
+    --foreground: 24 10% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 10% 8%;
+    --primary: 24 10% 8%;
+    --primary-foreground: 40 33% 97%;
+    --secondary: 36 20% 92%;
+    --secondary-foreground: 24 10% 12%;
+    --muted: 36 18% 93%;
+    --muted-foreground: 24 6% 42%;
+    --accent: 11 100% 61%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 14% 87%;
+    --input: 30 14% 84%;
+    --ring: 11 100% 61%;
+    --radius: 0.75rem;
+    --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
+  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+}
+
+@layer utilities {
+  .grain {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+}
