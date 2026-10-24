@@ -8,7 +8,7 @@ export const env = {
   openaiKey: process.env.OPENAI_API_KEY ?? "",
   openaiTextModel: process.env.OPENAI_TEXT_MODEL ?? "gpt-4o-mini",
   imageProvider: (process.env.IMAGE_PROVIDER ?? "openai") as "openai" | "none",
-  openaiImageModel: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1",
+  openaiImageModel: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare",
   youtubeKey: process.env.YOUTUBE_API_KEY ?? "",
   region: process.env.RESEARCH_REGION ?? "IN",
   language: process.env.RESEARCH_LANGUAGE ?? "en",

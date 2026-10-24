@@ -38,7 +38,7 @@ Private images ◀─GET /api/assets?path=──────  ownership check + 
 |---|---|---|
 | **Groq** (`openai/gpt-oss-120b`, auto-fallback to `gpt-oss-20b`) | Default fast text: keyword ideas, scoring, slide copy, captions (JSON mode) | `GROQ_API_KEY` |
 | **OpenAI** text (`gpt-4o-mini`) | Fallback / alternative text provider (`TEXT_PROVIDER=openai`) | `OPENAI_API_KEY` |
-| **OpenAI Images** (`gpt-image-1`) | Text‑free backgrounds/illustrations (1024×1536 or 1024×1024) | `OPENAI_API_KEY`, `IMAGE_PROVIDER=openai` |
+| **OpenAI Images** (`gpt-image-2.5-flare` (auto-falls back to `gpt-image-2.5-sunburst`, `gpt-image-2`)) | Text‑free backgrounds/illustrations (1024×1536 or 1024×1024) | `OPENAI_API_KEY`, `IMAGE_PROVIDER=openai` |
 | **YouTube Data API v3** | Engagement of recent videos per keyword; trending videos by region | `YOUTUBE_API_KEY` |
 | **Google Ads API – Keyword Planner** | Real avg monthly searches, competition, 12‑month volumes | developer token + OAuth (optional) |
 | **Wikimedia REST** | Daily article pageviews (interest proxy), “most read” trending list | none |
@@ -84,7 +84,7 @@ npm run dev                  # http://localhost:3000
 3. *Authentication → URL configuration*: add `http://localhost:3000/auth/callback` (and your prod URL) to redirect URLs. Disable "Confirm email" for faster local testing if you like.
 
 **Groq**: console.groq.com → API keys → `GROQ_API_KEY`.
-**OpenAI**: platform.openai.com → API key → `OPENAI_API_KEY`. `gpt-image-1` may require organisation verification; set `OPENAI_IMAGE_MODEL=dall-e-3` as an alternative, or `IMAGE_PROVIDER=none` for designed text‑only slides.
+**OpenAI**: platform.openai.com → API key → `OPENAI_API_KEY`. `gpt-image-2.5-flare` (auto-falls back to `gpt-image-2.5-sunburst`, `gpt-image-2`) may require organisation verification; set `OPENAI_IMAGE_MODEL=dall-e-3` as an alternative, or `IMAGE_PROVIDER=none` for designed text‑only slides.
 
 **YouTube Data API**
 1. console.cloud.google.com → create/select project.
