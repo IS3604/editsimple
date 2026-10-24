@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import type { Design } from "@/lib/types";
 import { TEMPLATES as TEMPLATE_KEYS } from "@/lib/types";
-import { FONT_LABEL, TEMPLATES, contrast } from "@/lib/themes";
+import { FONTS, TEMPLATES, contrast } from "@/lib/themes";
 import type { Niche } from "@/lib/niches";
 import { api } from "@/lib/api-client";
 import { assetUrlClient } from "@/lib/asset-url";
@@ -90,19 +90,41 @@ export function ColorControls({ design, onChange }: { design: Design; onChange: 
 }
 
 export function FontControls({ design, onChange }: { design: Design; onChange: (d: Design) => void }) {
-  const keys = (Object.keys(FONT_LABEL) as Design["fontHeading"][]).filter((k) => k !== "instrument");
+  const [target, setTarget] = useState<"heading" | "body">("heading");
+  const current = target === "heading" ? design.fontHeading : design.fontBody;
+  const keys = (Object.keys(FONTS) as Design["fontHeading"][]).filter((k) => !FONTS[k].hidden && (target === "heading" || !FONTS[k].headingOnly));
+  const groups = (["Sans", "Display", "Serif"] as const).map((g) => ({ g, items: keys.filter((k) => FONTS[k].kind === g) }));
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <Field label="Headings">
-        <Select value={design.fontHeading} onChange={(e) => onChange({ ...design, fontHeading: e.target.value as Design["fontHeading"] })}>
-          {keys.map((k) => <option key={k} value={k}>{FONT_LABEL[k]}</option>)}
-        </Select>
-      </Field>
-      <Field label="Body text">
-        <Select value={design.fontBody} onChange={(e) => onChange({ ...design, fontBody: e.target.value as Design["fontBody"] })}>
-          {keys.map((k) => <option key={k} value={k}>{FONT_LABEL[k]}</option>)}
-        </Select>
-      </Field>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-medium">Fonts</span>
+        <Segmented size="sm" value={target} onChange={setTarget} options={[{ value: "heading", label: `Headings: ${FONTS[design.fontHeading].label}` }, { value: "body", label: `Body: ${FONTS[design.fontBody].label}` }]} />
+      </div>
+      {groups.map(({ g, items }) => (
+        <div key={g}>
+          <p className="mb-1.5 text-[11px] text-muted-foreground">{g}</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {items.map((k) => {
+              const f = FONTS[k];
+              const on = current === k;
+              return (
+                <button
+                  type="button"
+                  key={k}
+                  onClick={() => onChange(target === "heading" ? { ...design, fontHeading: k } : { ...design, fontBody: k })}
+                  className={cn("rounded-lg border px-2 py-2 text-left transition-colors", on ? "border-accent bg-[hsl(var(--accent-soft))]" : "bg-card hover:border-foreground/30")}
+                  aria-pressed={on}
+                >
+                  <span className="block truncate text-[19px] leading-tight" style={{ fontFamily: f.family, fontWeight: f.fixedWeight ?? (target === "heading" ? 700 : 400) }}>
+                    {target === "heading" ? "Aa Bb" : "Aa bb cc"}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

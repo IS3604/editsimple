@@ -4,7 +4,10 @@ export const PLATFORMS = ["instagram", "linkedin", "both"] as const;
 export const OBJECTIVES = ["education", "engagement", "awareness", "leads"] as const;
 export const TEMPLATES = ["studio", "clinic", "counsel", "editorial", "mesh", "bold", "noir"] as const;
 export const LAYOUTS = ["top", "center", "bottom", "split"] as const;
-export const FONT_KEYS = ["geist", "bricolage", "fraunces", "instrument"] as const;
+export const FONT_KEYS = [
+  "geist", "jakarta", "montserrat", "poppins", "dmsans", "outfit", "sora", "spacegrotesk", "bricolage", "archivo", "bebas",
+  "fraunces", "playfair", "dmserif", "lora", "instrument",
+] as const;
 export const SLIDE_KINDS = ["hook", "statement", "list", "steps", "checklist", "myth_fact", "comparison", "highlight", "cta"] as const;
 export type SlideKind = (typeof SLIDE_KINDS)[number];
 
@@ -100,6 +103,8 @@ export type KeywordMetric = {
     median_views_per_day: number | null;
     median_engagement_rate: number | null;
     latest_upload: string | null;
+    top_video?: { id: string; title: string; views_per_day: number } | null;
+    window_days?: number;
   } | null;
   /** AI-estimated viral potential (0–100). Always shown as an estimate. */
   ai_opportunity_score: number | null;

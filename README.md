@@ -138,3 +138,9 @@ Create → fill brief & design (or load a saved brand kit) → **Research keywor
 - **Import template**: (1) match a design from a screenshot (colours extracted in the browser, closest layout picked), (2) branded background image drawn under every slide with an adjustable text margin, (3) EditSimple `.json` template files — plus "Export current look as a file".
 - **Typography**: UI is now Geist throughout (the serif display face is retired, including the Editorial template).
 - **Unit tests**: `npm test` (Vitest) — 62 tests across research parsing, trends, palette/template import, schemas, slide structure, market-aware prompts, LLM fallback and slide rendering.
+
+### v3.1
+- Keywords now rank by **YouTube views/day** (median of the 5 fastest videos in the last 30 days, client's market). Keyword ideas are seeded from the titles/tags of the fastest-growing videos on the topic. Sort the table by views/day, viral potential or news. YouTube results cached 12 h (≈810 quota units per fresh research run; default quota 10,000/day).
+- 15 carousel fonts (Geist, Plus Jakarta Sans, Montserrat, Poppins, DM Sans, Outfit, Sora, Space Grotesk, Bricolage, Archivo, Bebas Neue, Fraunces, Playfair Display, DM Serif Display, Lora) with a visual picker. Exports embed only the fonts a slide uses.
+- Favicon / app icon (`src/app/icon.svg`, `favicon.ico`, `apple-icon.png`).
+- `OPENAI_IMAGE_QUALITY` (low | medium | high, default medium).

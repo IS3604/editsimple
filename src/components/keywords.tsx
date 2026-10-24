@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { Segmented } from "@/components/ui";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Check, Copy, Info, X } from "lucide-react";
 import type { KeywordMetric, SourceStatus } from "@/lib/types";
@@ -48,7 +49,7 @@ export function DataNotice() {
     <div className="flex gap-3 rounded-xl bg-card p-3.5 text-xs leading-relaxed text-muted-foreground ring-1 ring-border">
       <Info className="mt-0.5 h-4 w-4 shrink-0" />
       <p>
-        <span className="real-tag mr-1">Measured</span> news mentions, YouTube views per day and engagement, Wikipedia interest trend, and search volume when Google Ads is
+        <span className="real-tag mr-1">Measured</span> news mentions, YouTube views per day (the 5 fastest videos for the phrase in the last 30 days) and engagement, Wikipedia interest trend, and search volume when Google Ads is
         connected. <span className="ai-tag mx-1">Estimate</span> viral potential is AI-judged from those signals plus how much the phrase makes people save and share.
         Instagram doesn&apos;t expose search or hashtag reach, so nothing here claims it.
       </p>
@@ -80,10 +81,16 @@ export function KeywordTable({
   onFocus?: (keyword: string) => void;
   focusedKeyword?: string | null;
 }) {
-  const kw = rows.filter((r) => r.kind !== "hashtag");
+  const [sort, setSort] = useState<"views" | "viral" | "news">("views");
+  const metric = (r: KeywordMetric) => (sort === "views" ? r.youtube_stats?.median_views_per_day : sort === "news" ? r.news_mentions : r.ai_opportunity_score) ?? -1;
+  const kw = rows.filter((r) => r.kind !== "hashtag").sort((a, b) => metric(b) - metric(a));
   const hasAds = kw.some((r) => r.avg_monthly_searches != null);
   return (
     <div className="overflow-x-auto rounded-2xl border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2.5">
+        <span className="text-xs text-muted-foreground">Sort by</span>
+        <Segmented size="sm" value={sort} onChange={setSort} options={[{ value: "views", label: "YouTube views/day" }, { value: "viral", label: "Viral potential" }, { value: "news", label: "News" }]} />
+      </div>
       <table className="w-full min-w-[760px] text-[13px]">
         <thead className="border-b text-left text-xs text-muted-foreground">
           <tr>
@@ -93,7 +100,7 @@ export function KeywordTable({
               <span className="inline-flex items-center gap-1.5">Viral potential <AiTag>estimate</AiTag></span>
             </th>
             <th className="py-3 font-medium">News, 7 days</th>
-            <th className="py-3 font-medium">YouTube views/day</th>
+            <th className="py-3 font-medium" title="Median views per day of the 5 fastest-growing videos for this phrase in the last 30 days">YouTube views/day</th>
             <th className="py-3 font-medium">Interest</th>
             {hasAds && <th className="py-3 pr-4 font-medium">Searches/mo</th>}
           </tr>
@@ -120,7 +127,12 @@ export function KeywordTable({
               <td className="py-3 pr-4 tabular-nums">{r.news_mentions != null ? (r.news_mentions >= 100 ? "100+" : r.news_mentions) : <span className="text-muted-foreground/60">—</span>}</td>
               <td className="py-3 pr-4 tabular-nums">
                 {r.youtube_stats?.median_views_per_day != null ? (
-                  <span title={`${r.youtube_stats.median_engagement_rate ?? "—"}% engagement, ${r.youtube_stats.sample_size} videos`}>{formatNumber(r.youtube_stats.median_views_per_day)}</span>
+                  <span
+                    title={`${r.youtube_stats.median_engagement_rate ?? "—"}% engagement, ${r.youtube_stats.sample_size} videos`}
+                    className={cn("font-semibold", r.youtube_stats.median_views_per_day >= 10000 ? "text-accent" : r.youtube_stats.median_views_per_day >= 1000 ? "text-foreground" : "font-normal text-muted-foreground")}
+                  >
+                    {formatNumber(r.youtube_stats.median_views_per_day)}
+                  </span>
                 ) : (
                   <span className="text-muted-foreground/60">—</span>
                 )}
@@ -175,6 +187,12 @@ export function KeywordDetail({ row }: { row: KeywordMetric | null }) {
         </div>
       ) : (
         <p className="mt-4 text-[13px] text-muted-foreground">No interest history available for this phrase.</p>
+      )}
+      {row.youtube_stats?.top_video && (
+        <a href={`https://www.youtube.com/watch?v=${row.youtube_stats.top_video.id}`} target="_blank" rel="noreferrer" className="mt-4 block rounded-xl bg-secondary/70 p-3 text-[13px] hover:bg-secondary">
+          <span className="block text-xs text-muted-foreground">Fastest video in the last 30 days: {formatNumber(row.youtube_stats.top_video.views_per_day)} views a day</span>
+          <span className="mt-0.5 line-clamp-2 font-medium">{row.youtube_stats.top_video.title}</span>
+        </a>
       )}
       <p className="mt-3 text-[11px] text-muted-foreground">Fetched {new Date(row.fetched_at).toLocaleString()}</p>
     </Card>

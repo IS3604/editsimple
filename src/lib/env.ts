@@ -8,6 +8,8 @@ export const env = {
   openaiKey: process.env.OPENAI_API_KEY ?? "",
   openaiTextModel: process.env.OPENAI_TEXT_MODEL ?? "gpt-4o-mini",
   imageProvider: (process.env.IMAGE_PROVIDER ?? "openai") as "openai" | "none",
+  /** low ≈ $0.006, medium ≈ $0.01–0.013, high ≈ $0.04–0.05 per image (gpt-image-2.5, Oct 2026) */
+  openaiImageQuality: (process.env.OPENAI_IMAGE_QUALITY || "medium") as "low" | "medium" | "high" | "auto",
   openaiImageModel: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2.5-flare",
   youtubeKey: process.env.YOUTUBE_API_KEY ?? "",
   region: process.env.RESEARCH_REGION ?? "IN",

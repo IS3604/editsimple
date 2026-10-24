@@ -1,7 +1,7 @@
 "use client";
 import { forwardRef, useLayoutEffect, useRef, useState } from "react";
 import type { Design, Slide, SlideItem } from "@/lib/types";
-import { FONT_VARS, TEMPLATES, isDark } from "@/lib/themes";
+import { FONTS, FONT_VARS, TEMPLATES, isDark } from "@/lib/themes";
 import { assetUrlClient } from "@/lib/asset-url";
 
 export type SlideSize = "1080x1350" | "1080x1080";
@@ -73,9 +73,12 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   const onAccent = isDark(accent) ? "#FFFFFF" : "#0F1115";
   const muted = alpha(ink, 0.68);
   const hair = alpha(ink, 0.16);
+  const headMeta = FONTS[design.fontHeading] ?? FONTS.geist;
+  const bodyMeta = FONTS[design.fontBody] ?? FONTS.geist;
   const headFont = FONT_VARS[design.fontHeading];
-  const bodyFont = FONT_VARS[design.fontBody];
-  const headWeight = look.headingWeight;
+  const bodyFont = bodyMeta.headingOnly ? FONT_VARS.geist : FONT_VARS[design.fontBody];
+  const headWeight = headMeta.fixedWeight ?? look.headingWeight;
+  const headTracking = headMeta.tracking ?? look.tracking;
   const scale = slide.style?.headingScale ?? 1;
 
   const hasImg = !!bgUrl;
@@ -109,7 +112,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     else base = len <= 36 ? 84 : len <= 60 ? 72 : 64;
     if (split) base *= 0.82;
     if (size === "1080x1080") base *= 0.9;
-    return base * scale * fit;
+    return base * scale * fit * (headMeta.scale ?? 1);
   })();
   const bodySize = 38 * fit;
   const itemTitle = 40 * fit;
@@ -143,9 +146,9 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       style={{
         fontFamily: headFont,
         fontSize: headSize,
-        lineHeight: design.fontHeading === "fraunces" || design.fontHeading === "instrument" ? 1.04 : 0.98,
+        lineHeight: headMeta.lineHeight ?? 0.98,
         fontWeight: headWeight,
-        letterSpacing: look.tracking,
+        letterSpacing: headTracking,
         color: fieldInk,
         textWrap: "balance" as never,
         overflowWrap: "break-word",
@@ -296,7 +299,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
                 const bad = neg(c.title);
                 return (
                   <div key={i} style={{ ...cardBase(!bad), display: "flex", flexDirection: "column", gap: 18 * fit }}>
-                    <div style={{ fontFamily: headFont, fontWeight: headWeight, fontSize: 40 * fit, color: bad ? muted : accent, letterSpacing: look.tracking }}>{c.title}</div>
+                    <div style={{ fontFamily: headFont, fontWeight: headWeight, fontSize: 40 * fit * (headMeta.scale ?? 1), color: bad ? muted : accent, letterSpacing: headTracking }}>{c.title}</div>
                     {c.text.split("\n").filter(Boolean).map((line, j) => (
                       <div key={j} style={{ display: "flex", gap: 14 * fit, alignItems: "flex-start", fontFamily: bodyFont, fontSize: itemText, lineHeight: 1.35, color: ink }}>
                         <Icon d={bad ? I.cross : I.check} size={30 * fit} color={bad ? muted : accent} />

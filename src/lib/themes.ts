@@ -1,19 +1,47 @@
 import type { Colors, Design } from "@/lib/types";
 import type { Niche } from "@/lib/niches";
 
-export const FONT_VARS: Record<Design["fontHeading"], string> = {
-  geist: "'Geist Variable', ui-sans-serif, system-ui, sans-serif",
-  bricolage: "'Bricolage Grotesque Variable', ui-sans-serif, sans-serif",
-  fraunces: "'Fraunces Variable', ui-serif, Georgia, serif",
-  instrument: "'Fraunces Variable', ui-serif, Georgia, serif", // retired face — mapped to Fraunces
+type FontKey = Design["fontHeading"];
+export type FontMeta = {
+  label: string;
+  family: string;
+  kind: "Sans" | "Display" | "Serif";
+  /** fonts that only ship one weight — never fake-bold them */
+  fixedWeight?: number;
+  /** only suitable for headings (all-caps or display cuts) */
+  headingOnly?: boolean;
+  /** optical size correction vs. a typical sans */
+  scale?: number;
+  lineHeight?: number;
+  tracking?: string;
+  hidden?: boolean;
 };
 
-export const FONT_LABEL: Record<Design["fontHeading"], string> = {
-  geist: "Geist",
-  bricolage: "Bricolage",
-  fraunces: "Fraunces",
-  instrument: "Fraunces",
+const sans = (f: string) => `'${f}', ui-sans-serif, system-ui, sans-serif`;
+const serif = (f: string) => `'${f}', ui-serif, Georgia, serif`;
+
+/** Carousel fonts — all self-hosted so exports embed them reliably. */
+export const FONTS: Record<FontKey, FontMeta> = {
+  geist: { label: "Geist", family: sans("Geist Variable"), kind: "Sans" },
+  jakarta: { label: "Plus Jakarta Sans", family: sans("Plus Jakarta Sans Variable"), kind: "Sans" },
+  montserrat: { label: "Montserrat", family: sans("Montserrat Variable"), kind: "Sans", scale: 0.94 },
+  poppins: { label: "Poppins", family: sans("Poppins"), kind: "Sans", scale: 0.94 },
+  dmsans: { label: "DM Sans", family: sans("DM Sans Variable"), kind: "Sans" },
+  outfit: { label: "Outfit", family: sans("Outfit Variable"), kind: "Sans", scale: 1.02 },
+  sora: { label: "Sora", family: sans("Sora Variable"), kind: "Sans", scale: 0.94 },
+  spacegrotesk: { label: "Space Grotesk", family: sans("Space Grotesk Variable"), kind: "Display" },
+  bricolage: { label: "Bricolage", family: sans("Bricolage Grotesque Variable"), kind: "Display" },
+  archivo: { label: "Archivo", family: sans("Archivo Variable"), kind: "Display" },
+  bebas: { label: "Bebas Neue", family: sans("Bebas Neue"), kind: "Display", fixedWeight: 400, headingOnly: true, scale: 1.3, lineHeight: 0.92, tracking: "0.01em" },
+  fraunces: { label: "Fraunces", family: serif("Fraunces Variable"), kind: "Serif", lineHeight: 1.04 },
+  playfair: { label: "Playfair Display", family: serif("Playfair Display Variable"), kind: "Serif", lineHeight: 1.06, tracking: "-0.01em" },
+  dmserif: { label: "DM Serif Display", family: serif("DM Serif Display"), kind: "Serif", fixedWeight: 400, headingOnly: true, scale: 1.04, lineHeight: 1.04, tracking: "-0.01em" },
+  lora: { label: "Lora", family: serif("Lora Variable"), kind: "Serif", lineHeight: 1.08, tracking: "-0.01em" },
+  instrument: { label: "Fraunces", family: serif("Fraunces Variable"), kind: "Serif", lineHeight: 1.04, hidden: true }, // retired face
 };
+
+export const FONT_VARS = Object.fromEntries(Object.entries(FONTS).map(([k, v]) => [k, v.family])) as Record<FontKey, string>;
+export const FONT_LABEL = Object.fromEntries(Object.entries(FONTS).map(([k, v]) => [k, v.label])) as Record<FontKey, string>;
 
 export type TemplateSpec = {
   label: string;

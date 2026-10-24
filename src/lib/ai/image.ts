@@ -60,7 +60,7 @@ export async function generateBackground(prompt: string, aspect: "portrait" | "s
   for (const model of imageCandidates(env.openaiImageModel)) {
     // JPEG keeps files ~5× smaller — faster previews and under Vercel's 4.5 MB response cap
     const attempts: Record<string, unknown>[] = [
-      { model, prompt: fullPrompt, size, n: 1, output_format: "jpeg", output_compression: 88 },
+      { model, prompt: fullPrompt, size, n: 1, output_format: "jpeg", output_compression: 88, quality: env.openaiImageQuality },
       { model, prompt: fullPrompt, size, n: 1 },
     ];
     for (const params of attempts) {

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 // Self-hosted fonts (bundled, same-origin) so slide exports embed them reliably.
-import "@fontsource-variable/geist";
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource-variable/fraunces";
+import "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {

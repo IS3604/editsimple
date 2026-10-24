@@ -8,7 +8,7 @@ import { slugHashtag } from "@/lib/utils";
 import { adsConfigured, adsTrend, keywordIdeas } from "./googleAds";
 import { newsMentions } from "./news";
 import { pageviews, resolveArticle, trendDirection } from "./wikipedia";
-import { keywordVideoStats, youtubeConfigured } from "./youtube";
+import { discoverHotPhrases, keywordVideoStats, youtubeConfigured } from "./youtube";
 
 export type ResearchInput = {
   topic: string;
@@ -22,7 +22,7 @@ export type ResearchInput = {
 export type ResearchResult = { rows: KeywordMetric[]; sources: SourceStatus[] };
 
 const MAX_KEYWORDS = 14;
-const MAX_YOUTUBE = 6; // search.list = 100 quota units each
+const MAX_YOUTUBE = 7; // search.list = 100 quota units each (cached 12 h)
 const MAX_NEWS = 12;
 const now = () => new Date().toISOString();
 
@@ -55,6 +55,27 @@ async function track<T>(sources: SourceStatus[], source: string, fn: () => Promi
     sources.push({ source, ok: false, error: e instanceof Error ? e.message : String(e), fetched_at: now() });
     return null;
   }
+}
+
+const vpd = (r: KeywordMetric) => r.youtube_stats?.median_views_per_day ?? -1;
+
+/**
+ * Your topic and your own keywords first; then the phrases pulling the most YouTube views per day,
+ * then viral potential. Pre-selects the top 3 by views/day (falling back to viral score).
+ */
+export function rankRows(rows: KeywordMetric[]) {
+  const pri = (r: KeywordMetric) => (r.kind === "seed" ? 2 : r.kind === "user" ? 1 : 0);
+  rows.sort((a, b) => pri(b) - pri(a) || vpd(b) - vpd(a) || (b.ai_opportunity_score ?? -1) - (a.ai_opportunity_score ?? -1));
+  let picked = 0;
+  rows.forEach((r) => {
+    r.selected = false;
+    if (r.kind === "seed" || r.kind === "user") r.selected = true;
+    else if (picked < 3) {
+      r.selected = true;
+      picked++;
+    }
+  });
+  return rows;
 }
 
 export async function runResearch(input: ResearchInput): Promise<ResearchResult> {
@@ -93,11 +114,16 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
     sources.push({ source: "google_ads", ok: false, error: "Not connected — search volume unavailable", fetched_at: now() });
   }
 
+  // What's pulling views on YouTube right now for this topic (real) — keyword ideas start from proven demand
+  const hot = youtubeConfigured()
+    ? await discoverHotPhrases(`${input.topic}`, MARKETS[input.market].yt).catch(() => [] as Awaited<ReturnType<typeof discoverHotPhrases>>)
+    : [];
+
   // AI search-phrase ideas (labelled)
   const ideas = await track(sources, "ai_suggestions", () =>
     chatJSON({
       system: systemFor(input.niche, input.market),
-      user: keywordIdeasPrompt({ topic: input.topic, niche: input.niche, market: input.market, specialty: input.specialty, platform: input.platform, audience: input.audience }),
+      user: keywordIdeasPrompt({ topic: input.topic, niche: input.niche, market: input.market, specialty: input.specialty, platform: input.platform, audience: input.audience, hotVideos: hot }),
       schema: KeywordIdeasSchema,
       temperature: 0.5,
     })
@@ -155,7 +181,7 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
             });
             if (res.every((x) => x.status === "rejected")) throw (res[0] as PromiseRejectedResult).reason;
           },
-          "Views per day and engagement of relevant videos from the last 90 days"
+          "Views per day of the 5 fastest-growing videos for the phrase in the last 30 days, plus engagement"
         )
       : Promise.resolve(sources.push({ source: "youtube_data_api", ok: false, error: "YOUTUBE_API_KEY not set", fetched_at: now() })),
   ]);
@@ -183,18 +209,7 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
     }
   });
 
-  rows.sort((a, b) => {
-    const pri = (r: KeywordMetric) => (r.kind === "seed" ? 2 : r.kind === "user" ? 1 : 0);
-    return pri(b) - pri(a) || (b.ai_opportunity_score ?? -1) - (a.ai_opportunity_score ?? -1);
-  });
-  let picked = 0;
-  rows.forEach((r) => {
-    if (r.kind === "seed" || r.kind === "user") r.selected = true;
-    else if (picked < 3) {
-      r.selected = true;
-      picked++;
-    }
-  });
+  rankRows(rows);
 
   return { rows: [...rows, ...hashtagRows], sources };
 }

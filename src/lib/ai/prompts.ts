@@ -101,8 +101,17 @@ Hard rules:
 }
 
 // ---------------- keyword research ----------------
-export function keywordIdeasPrompt(p: { topic: string; niche: Niche; market: MarketCode; specialty?: string; platform: string; audience?: string }) {
+export function keywordIdeasPrompt(p: {
+  topic: string;
+  niche: Niche;
+  market: MarketCode;
+  specialty?: string;
+  platform: string;
+  audience?: string;
+  hotVideos?: { title: string; tags: string[]; views_per_day: number }[];
+}) {
   const r = rulesFor(p.niche, p.market);
+  const hot = (p.hotVideos ?? []).slice(0, 12);
   return `Topic: ${p.topic}
 Client: ${NICHES[p.niche].who}${p.specialty ? ` (${p.specialty})` : ""}, audience in ${r.label}.
 Platform: ${p.platform}. Audience: ${p.audience || "general public"}
@@ -110,6 +119,9 @@ Platform: ${p.platform}. Audience: ${p.audience || "general public"}
 List up to 12 search phrases this audience actually types into Instagram and Google around the topic — the questions and worries that make people stop scrolling.
 Use ${r.spelling} and local terms for ${r.label}. Mix short "related" terms and 3–7 word "long_tail" questions ("what to do if…", "signs of…", "can my landlord…").
 Prefer phrases with built-in curiosity or a practical payoff — those spread on Instagram.
+${hot.length ? `These are the fastest-growing YouTube videos on this topic in ${r.label} in the last 30 days (real data: title — views per day — tags):
+${hot.map((h) => `- ${h.title} — ${h.views_per_day}/day — ${h.tags.slice(0, 8).join(", ")}`).join("\n")}
+At least half of your keywords must reuse the exact phrasing, questions and angles from the highest views-per-day videos (not channel names or clickbait), because that is proven demand.` : ""}
 If an English Wikipedia article clearly matches a keyword's core concept, give its exact title in "wikipedia_title".
 Also give up to 12 hashtags (no spaces) mixing broad and niche tags used by ${NICHES[p.niche].who}s in ${r.label}.
 Never include numbers, volumes or popularity claims.
@@ -130,7 +142,7 @@ Measured signals (null = not available): ${JSON.stringify(data)}
 
 Estimate each keyword's VIRAL POTENTIAL on Instagram (0–100) as a post subject. Weigh:
 1) emotional/practical pull (fear, surprise, money, family, "I didn't know that"), 2) shareability ("send this to someone who…"),
-3) timeliness from the measured signals (news mentions, rising trend, high views/day), 4) how saturated or generic it is.
+3) demand from the measured signals — YouTube views per day is the strongest signal (thousands/day = hot), then news mentions and rising trend, 4) how saturated or generic it is.
 Be calibrated: most keywords land 35–70; reserve 80+ for strong pull AND timely evidence. Rationale ≤ 200 chars, name the signal you relied on.
 JSON: {"scores":[{"keyword","score","rationale"}]}`;
 }
