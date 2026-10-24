@@ -110,3 +110,18 @@ Create → fill brief & design (or load a saved brand kit) → **Research keywor
 - Reference URLs: public pages only; Instagram/LinkedIn posts need login and aren't fetched.
 - Post‑performance table exists; no UI yet (would come from Instagram Graph / LinkedIn APIs for business accounts).
 - Add rate limiting per user on AI routes (e.g. Upstash) before opening to the public.
+
+---
+
+## v2 — doctors & lawyers edition (Oct 2026)
+
+**Run once in Supabase → SQL Editor:** `supabase/migrations/0002_niches_templates.sql`.
+
+- **Niche-first**: Doctors / Lawyers switch in the sidebar (recolours the app). Prompts carry niche playbooks and compliance rules (NMC conduct norms; Bar Council of India Rule 36 — no solicitation CTAs).
+- **Trending** (`/api/trending?niche=`): real Google News RSS headlines (India, 7 days) + YouTube most-viewed niche videos → AI post ideas with source links. Cached 1 h.
+- **Viral potential**: measured signals per keyword (news mentions 7d, YouTube views/day + engagement, Wikipedia trend, Ads volume if connected) + an AI-estimated viral score grounded on them. Instagram exposes no search/reach data.
+- **Better copy**: angle-first prompt, 9 slide types (cover, single point, list, steps, checklist, myth vs fact, do vs don't, big statement, CTA), then an editor pass. gpt-oss-120b on Groq.
+- **AI help while filling the brief** (`/api/suggest`): topic ideas, sharper title, cover hooks, audiences, keywords, tip.
+- **Image alignment**: images generated in the frame's aspect (portrait full-bleed/side, landscape inline), composition rules, JPEG output, focus slider.
+- **7 templates**: Studio, Clinic, Counsel, Editorial, Aura, Poster, Night.
+- **New UI**: 3-step create flow with live phone preview; redesigned dashboard, trending, keywords, editor, brand kit, login.

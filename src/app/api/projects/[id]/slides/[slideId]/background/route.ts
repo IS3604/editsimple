@@ -35,13 +35,22 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
     const body = z.object({ prompt: z.string().max(800).optional() }).parse(await req.json().catch(() => ({})));
     const { data: brief } = await sb.from("content_briefs").select("strategy").eq("project_id", id).maybeSingle();
     const d = project.design ?? {};
+    // Match the generated image's aspect to the frame it fills on the slide, so nothing important is cropped.
+    const fullBleed = slide.layout === "center" || slide.kind === "hook";
+    const aspect: "portrait" | "square" | "landscape" =
+      slide.layout === "split" ? "portrait" : fullBleed ? (project.size === "1080x1080" ? "square" : "portrait") : "landscape";
+    const composition = fullBleed
+      ? "Composition: main subject in the upper-middle third, lower 40% darker and low-detail (text sits there). Keep the subject fully inside the frame with margin on all sides."
+      : aspect === "landscape"
+      ? "Composition: wide landscape frame, subject centred horizontally and vertically, fully visible with comfortable margins; nothing important near the edges."
+      : "Composition: tall frame, subject centred, fully visible with margin on all sides.";
     prompt = [
-      brief?.strategy?.visual_direction ? `Series style: ${brief.strategy.visual_direction}.` : "",
+      brief?.strategy?.visual_direction ? `Series style (keep consistent across slides): ${brief.strategy.visual_direction}.` : "",
       `Scene: ${body.prompt ?? slide.visual_prompt ?? slide.heading}.`,
-      `Visual theme: ${d.theme ?? "minimalist"}. Palette anchored on ${d.colors?.background ?? ""}, ${d.colors?.accent ?? ""}, ${d.colors?.primary ?? ""}.`,
-      slide.layout === "top" ? "Keep the top 55% calm and empty for text." : slide.layout === "bottom" ? "Keep the bottom 55% calm and empty for text." : slide.layout === "split" ? "Subject on the right half; left half calm." : "Low-detail, even composition suitable for centered text overlay.",
+      `Colour palette harmonised with ${d.colors?.background ?? ""} and ${d.colors?.accent ?? ""}; modern editorial photography or refined 3D illustration, natural light, high detail.`,
+      composition,
     ].join(" ");
-    const img = await generateBackground(prompt, project.size === "1080x1080" ? "square" : "portrait");
+    const img = await generateBackground(prompt, aspect);
     ({ bytes, mime, provider } = img);
     w = img.width;
     h = img.height;

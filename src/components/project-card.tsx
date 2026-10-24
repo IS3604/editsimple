@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
-import { Badge } from "@/components/ui";
 import { assetUrlClient } from "@/lib/asset-url";
-import { STAGES } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export type ProjectListItem = {
   id: string;
@@ -18,29 +17,36 @@ export type ProjectListItem = {
   slides: { render_path: string | null; background_path: string | null; position: number }[];
 };
 
-export function ProjectCard({ p }: { p: ProjectListItem }) {
+const STATUS: Record<ProjectListItem["status"], { label: string; cls: string }> = {
+  ready: { label: "Ready", cls: "bg-emerald-500" },
+  failed: { label: "Needs attention", cls: "bg-rose-500" },
+  generating: { label: "In progress", cls: "bg-amber-400" },
+  draft: { label: "Draft", cls: "bg-neutral-300" },
+};
+
+export function ProjectCard({ p, compact }: { p: ProjectListItem; compact?: boolean }) {
   const first = [...(p.slides ?? [])].sort((a, b) => a.position - b.position)[0];
   const thumb = first?.render_path ?? null;
-  const tone = p.status === "ready" ? "good" : p.status === "failed" ? "bad" : "muted";
+  const st = STATUS[p.status] ?? STATUS.draft;
   return (
-    <Link href={`/projects/${p.id}`} className="lift group overflow-hidden rounded-xl border bg-card">
-      <div className="relative aspect-[4/5] overflow-hidden" style={{ background: p.design?.colors?.background ?? "#eee" }}>
+    <Link href={`/projects/${p.id}`} className="group block">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-xl ring-1 ring-border transition-shadow group-hover:shadow-[0_16px_34px_-20px_rgb(15_18_30/.5)]" style={{ background: p.design?.colors?.background ?? "#eceef2" }}>
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={assetUrlClient(thumb)!} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+          <img src={assetUrlClient(thumb)!} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className="grid h-full place-items-center">
-            <ImageIcon className="h-8 w-8 opacity-30" />
+            <ImageIcon className="h-7 w-7 opacity-25" />
           </div>
         )}
-        <Badge tone={tone} className="absolute left-2 top-2 capitalize">{p.status}</Badge>
       </div>
-      <div className="space-y-1 p-3">
-        <p className="line-clamp-2 font-medium leading-snug">{p.title}</p>
-        <p className="text-xs capitalize text-muted-foreground">
-          {p.platform} · {p.slide_count} slides · {new Date(p.updated_at).toLocaleDateString()}
+      <div className={cn("pt-2.5", compact && "pt-2")}>
+        <p className={cn("line-clamp-2 font-medium leading-snug", compact ? "text-[13px]" : "text-[14px]")}>{p.title}</p>
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className={cn("h-1.5 w-1.5 rounded-full", st.cls)} />
+          {st.label}
+          {!compact && <span className="ml-1">{new Date(p.updated_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>}
         </p>
-        {p.status !== "ready" && <p className="text-xs text-muted-foreground">Next: {STAGES[Math.min(p.stage < 1 ? 0 : p.stage < 3 ? 1 : p.stage < 4 ? 3 : p.stage - 1, 6)]}</p>}
       </div>
     </Link>
   );

@@ -4,7 +4,8 @@ import { handle, HttpError } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
 import { getProject, selectedKeywords } from "@/lib/data";
 import { chatJSON } from "@/lib/ai/llm";
-import { CaptionSchema, SYSTEM_STRATEGIST, captionPrompt } from "@/lib/ai/prompts";
+import { CaptionSchema, captionPrompt, systemFor } from "@/lib/ai/prompts";
+import { nicheOf } from "@/lib/niches";
 
 export const maxDuration = 60;
 type Ctx = { params: Promise<{ id: string }> };
@@ -21,21 +22,22 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
   const { platform } = z.object({ platform: Platform }).parse(await req.json());
   const [{ data: brief }, { data: slides }] = await Promise.all([
     sb.from("content_briefs").select("*").eq("project_id", id).single(),
-    sb.from("slides").select("heading,body").eq("project_id", id).order("position"),
+    sb.from("slides").select("heading,body,items").eq("project_id", id).order("position"),
   ]);
   if (!brief || !slides?.length) throw new HttpError(400, "Generate slides first");
   const { keywords, hashtags } = await selectedKeywords(sb, id);
 
   const out = await chatJSON({
-    system: SYSTEM_STRATEGIST,
+    system: systemFor(nicheOf(brief.niche)),
     user: captionPrompt({
+      niche: nicheOf(brief.niche),
       platform,
       topic: brief.topic,
       audience: brief.audience ?? "",
       objective: brief.objective ?? "education",
       tone: brief.tone ?? "",
       language: brief.language ?? "English",
-      slides,
+      slides: slides.map((x) => ({ heading: x.heading, body: [x.body, ...((x.items as { title: string; text: string }[]) ?? []).map((i) => `${i.title}: ${i.text}`)].filter(Boolean).join(" / ") })),
       keywords,
       hashtagIdeas: hashtags,
     }),

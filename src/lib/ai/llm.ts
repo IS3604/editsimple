@@ -43,6 +43,8 @@ export async function chatJSON<T>(opts: {
   schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   temperature?: number;
   prefer?: "groq" | "openai";
+  /** reasoning depth for gpt-oss models; "medium" for writing, "low" for quick helpers */
+  effort?: "low" | "medium" | "high";
 }): Promise<T> {
   let lastErr = "";
   for (const c of candidates(opts.prefer)) {
@@ -58,7 +60,7 @@ export async function chatJSON<T>(opts: {
           ],
         };
         // gpt-oss models on Groq are reasoning models — low effort keeps them fast
-        if (c.name === "groq" && c.model.startsWith("openai/gpt-oss")) params.reasoning_effort = "low";
+        if (c.name === "groq" && c.model.startsWith("openai/gpt-oss")) params.reasoning_effort = opts.effort ?? "low";
         const res = await c.client.chat.completions.create(params as unknown as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming);
         const raw = res.choices[0]?.message?.content ?? "";
         try {

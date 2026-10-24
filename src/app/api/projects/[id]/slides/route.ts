@@ -3,12 +3,14 @@ import { z } from "zod";
 import { handle } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
 import { getProject } from "@/lib/data";
-import { LAYOUTS } from "@/lib/types";
+import { LAYOUTS, SLIDE_KINDS } from "@/lib/types";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 const SlideIn = z.object({
   id: z.string().uuid().optional(),
+  kind: z.enum(SLIDE_KINDS).default("statement"),
+  items: z.array(z.object({ title: z.string().max(80), text: z.string().max(300) })).max(8).default([]),
   role: z.string().max(40).default("insight"),
   kicker: z.string().max(60).nullable().default(null),
   heading: z.string().max(160),
@@ -23,6 +25,7 @@ const SlideIn = z.object({
       accent: z.string().optional(),
       headingScale: z.number().min(0.5).max(1.6).optional(),
       overlay: z.number().min(0).max(0.95).optional(),
+      focusY: z.number().min(0).max(100).optional(),
     })
     .default({}),
 });

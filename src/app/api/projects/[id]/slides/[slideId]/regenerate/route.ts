@@ -4,7 +4,8 @@ import { handle, HttpError } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
 import { getProject, selectedKeywords } from "@/lib/data";
 import { chatJSON } from "@/lib/ai/llm";
-import { SYSTEM_STRATEGIST, SlideCopySchema, regenerateSlidePrompt } from "@/lib/ai/prompts";
+import { SlideCopySchema, regenerateSlidePrompt, systemFor } from "@/lib/ai/prompts";
+import { nicheOf } from "@/lib/niches";
 
 export const maxDuration = 60;
 type Ctx = { params: Promise<{ id: string; slideId: string }> };
@@ -25,8 +26,9 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
   const { keywords } = await selectedKeywords(sb, id);
 
   const copy = await chatJSON({
-    system: SYSTEM_STRATEGIST,
+    system: systemFor(nicheOf(brief.niche)),
     user: regenerateSlidePrompt({
+      niche: nicheOf(brief.niche),
       topic: brief.topic,
       audience: brief.audience ?? "",
       tone: brief.tone ?? "",
@@ -34,17 +36,19 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
       keywords,
       position: target.position,
       total: slides.length,
-      role: target.role,
+      kind: target.kind ?? "statement",
+      current: JSON.stringify({ kind: target.kind, kicker: target.kicker, heading: target.heading, body: target.body, items: target.items }),
       neighbours: slides.filter((s) => s.id !== slideId).map((s) => `#${s.position + 1} ${s.heading}`).join(" | "),
       instruction,
     }),
     schema: SlideCopySchema,
     temperature: 0.9,
+    effort: "medium",
   });
 
   const { data, error } = await sb
     .from("slides")
-    .update({ role: copy.role, kicker: copy.kicker || null, heading: copy.heading, body: copy.body, visual_prompt: copy.visual_prompt })
+    .update({ kind: copy.kind, role: copy.role, kicker: copy.kicker || null, heading: copy.heading, body: copy.body, items: copy.items, visual_prompt: copy.visual_prompt || target.visual_prompt })
     .eq("id", slideId)
     .select("*")
     .single();

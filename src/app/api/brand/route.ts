@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handle } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
-import { ColorsSchema, FONT_KEYS, THEMES } from "@/lib/types";
+import { ColorsSchema, FONT_KEYS, TEMPLATES } from "@/lib/types";
 
 export const GET = handle(async () => {
   const { sb } = await requireUser();
@@ -13,11 +13,14 @@ export const GET = handle(async () => {
 const Body = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(60),
-  theme: z.enum(THEMES),
+  theme: z.enum(TEMPLATES), // stores the template key
+  niche: z.enum(["medical", "legal"]).nullable().optional(),
   colors: ColorsSchema,
   font_heading: z.enum(FONT_KEYS),
   font_body: z.enum(FONT_KEYS),
   logo_path: z.string().max(400).nullable().optional(),
+  display_name: z.string().max(60).nullable().optional(),
+  handle: z.string().max(60).nullable().optional(),
   tone: z.string().max(80).optional(),
   language: z.string().max(40).optional(),
   is_default: z.boolean().default(true),

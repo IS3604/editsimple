@@ -9,7 +9,8 @@ export const maxDuration = 60;
 
 const Body = z.object({
   topic: z.string().trim().min(2).max(200),
-  niche: z.string().trim().max(120).optional().default(""),
+  niche: z.enum(["medical", "legal"]).default("medical"),
+  specialty: z.string().trim().max(80).optional().default(""),
   platform: z.enum(["instagram", "linkedin", "both"]).default("instagram"),
   audience: z.string().trim().max(200).optional().default(""),
   userKeywords: z.array(z.string().trim().min(1).max(80)).max(15).default([]),
@@ -26,7 +27,7 @@ export const POST = handle(async (req: Request) => {
 
   const { data: research, error } = await sb
     .from("keyword_research")
-    .insert({ user_id: user.id, project_id: body.projectId ?? null, topic: body.topic, niche: body.niche, platform: body.platform, sources: result.sources })
+    .insert({ user_id: user.id, project_id: body.projectId ?? null, topic: body.topic, niche: [body.niche, body.specialty].filter(Boolean).join(" · "), platform: body.platform, sources: result.sources })
     .select("*")
     .single();
   if (error) throw error;

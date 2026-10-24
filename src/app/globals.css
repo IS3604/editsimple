@@ -2,76 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  EditSimple — "the practice desk"
+  Cool paper, ink, and one professional signal colour that changes with the niche:
+  surgical teal for doctors, oxblood for lawyers.
+*/
 @layer base {
   :root {
-    --background: 40 33% 97%;
-    --foreground: 24 10% 8%;
+    --background: 220 14% 96%;   /* paper  #F4F5F7 */
+    --foreground: 228 25% 11%;   /* ink    #151823 */
     --card: 0 0% 100%;
-    --card-foreground: 24 10% 8%;
-    --primary: 24 10% 8%;
-    --primary-foreground: 40 33% 97%;
-    --secondary: 36 20% 92%;
-    --secondary-foreground: 24 10% 12%;
-    --muted: 36 18% 93%;
-    --muted-foreground: 24 6% 42%;
-    --accent: 11 100% 61%;
+    --card-foreground: 228 25% 11%;
+    --primary: 228 25% 11%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 225 16% 93%;
+    --secondary-foreground: 228 25% 14%;
+    --muted: 225 16% 93%;
+    --muted-foreground: 225 11% 42%; /* slate #5F6577 */
+    --accent: 229 53% 37%;           /* default ink-blue */
+    --accent-soft: 229 53% 95%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 48%;
+    --destructive: 0 70% 46%;
     --destructive-foreground: 0 0% 100%;
-    --border: 30 14% 87%;
-    --input: 30 14% 84%;
-    --ring: 11 100% 61%;
-    --radius: 0.75rem;
-    --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
-    --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    --border: 225 15% 89%;
+    --input: 225 14% 84%;
+    --ring: var(--accent);
+    --radius: 0.7rem;
+    --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Instrument Serif", ui-serif, Georgia, serif;
     --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
   }
+  [data-niche="medical"] { --accent: 174 78% 27%; --accent-soft: 170 45% 93%; }
+  [data-niche="legal"] { --accent: 352 50% 37%; --accent-soft: 350 40% 95%; }
+
   * { @apply border-border; }
-  body { @apply bg-background text-foreground font-sans antialiased; }
-  h1, h2, h3 { @apply font-display tracking-tight; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { @apply bg-background text-foreground font-sans; font-feature-settings: "ss01", "cv11"; }
+  h1 { @apply font-display font-normal tracking-[-0.01em]; }
+  h2, h3 { @apply font-semibold tracking-[-0.015em]; }
+  ::selection { background: hsl(var(--accent) / .18); }
+  :focus-visible { outline: 2px solid hsl(var(--accent)); outline-offset: 2px; }
 }
 
 @layer components {
-  /* children animate in one after another */
-  .stagger > * { @apply animate-fade-up; }
-  .stagger > *:nth-child(1) { animation-delay: 0ms; }
-  .stagger > *:nth-child(2) { animation-delay: 60ms; }
-  .stagger > *:nth-child(3) { animation-delay: 120ms; }
-  .stagger > *:nth-child(4) { animation-delay: 180ms; }
-  .stagger > *:nth-child(5) { animation-delay: 240ms; }
-  .stagger > *:nth-child(6) { animation-delay: 300ms; }
-  .stagger > *:nth-child(7) { animation-delay: 360ms; }
-  .stagger > *:nth-child(n + 8) { animation-delay: 420ms; }
-
-  .lift { @apply transition duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgb(0_0_0/.35)]; }
-
   .skeleton {
-    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--secondary)) 50%, hsl(var(--muted)) 75%);
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(0 0% 100%) 50%, hsl(var(--muted)) 75%);
     background-size: 200% 100%;
     @apply animate-shimmer rounded-lg;
   }
-
-  .aurora {
-    background: linear-gradient(110deg, hsl(11 100% 61% / .16), hsl(265 90% 65% / .14), hsl(40 100% 60% / .16), hsl(11 100% 61% / .16));
-    background-size: 300% 300%;
-    @apply animate-aurora;
+  .phone {
+    border-radius: 44px;
+    padding: 12px;
+    background: #10121a;
+    box-shadow: 0 1px 0 1px #2a2e3a inset, 0 40px 80px -30px rgb(20 24 40 / .45), 0 18px 30px -18px rgb(20 24 40 / .35);
   }
-
-  .text-gradient {
-    background: linear-gradient(100deg, hsl(var(--foreground)) 30%, hsl(var(--accent)) 70%, hsl(265 80% 60%));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
+  .phone-screen { border-radius: 34px; overflow: hidden; background: #fff; }
+  .ai-tag { @apply inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-800 ring-1 ring-violet-200; }
+  .real-tag { @apply inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-200; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
-
-@layer utilities {
-  .grain {
-    background-image: radial-gradient(hsl(var(--foreground) / 0.035) 1px, transparent 1px);
-    background-size: 3px 3px;
-  }
 }

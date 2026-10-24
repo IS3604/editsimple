@@ -1,36 +1,108 @@
 import type { Colors, Design } from "@/lib/types";
+import type { Niche } from "@/lib/niches";
 
-export const FONT_VARS: Record<string, string> = {
-  display: "var(--font-display)",
-  sans: "var(--font-sans)",
-  serif: "var(--font-serif)",
+export const FONT_VARS: Record<Design["fontHeading"], string> = {
+  geist: "'Geist Variable', ui-sans-serif, system-ui, sans-serif",
+  bricolage: "'Bricolage Grotesque Variable', ui-sans-serif, sans-serif",
+  fraunces: "'Fraunces Variable', ui-serif, Georgia, serif",
+  instrument: "'Instrument Serif', ui-serif, Georgia, serif",
 };
 
-type ThemePreset = { colors: Colors; fontHeading: Design["fontHeading"]; fontBody: Design["fontBody"]; overlay: number; label: string };
-
-export const THEME_PRESETS: Record<Design["theme"], ThemePreset> = {
-  minimalist: { label: "Minimalist", colors: { primary: "#111111", accent: "#FF5A36", background: "#F6F3EE", text: "#111111" }, fontHeading: "display", fontBody: "sans", overlay: 0 },
-  editorial: { label: "Editorial", colors: { primary: "#1B1B1B", accent: "#B4472F", background: "#EFE9DF", text: "#1B1B1B" }, fontHeading: "serif", fontBody: "sans", overlay: 0 },
-  bold: { label: "Bold", colors: { primary: "#0B0B0B", accent: "#E8FF3A", background: "#2F2BFF", text: "#FFFFFF" }, fontHeading: "display", fontBody: "sans", overlay: 0.15 },
-  luxury: { label: "Luxury", colors: { primary: "#C9A86A", accent: "#C9A86A", background: "#121110", text: "#F4EFE6" }, fontHeading: "serif", fontBody: "sans", overlay: 0.45 },
-  corporate: { label: "Corporate", colors: { primary: "#0A2A5E", accent: "#1F7AE0", background: "#F4F7FB", text: "#0B1B33" }, fontHeading: "sans", fontBody: "sans", overlay: 0 },
-  dark: { label: "Dark", colors: { primary: "#FFFFFF", accent: "#7CFFB2", background: "#0E0F12", text: "#F2F2F2" }, fontHeading: "display", fontBody: "sans", overlay: 0.5 },
-  colorful: { label: "Colorful", colors: { primary: "#1A1033", accent: "#FF3D7F", background: "#FFD23F", text: "#1A1033" }, fontHeading: "display", fontBody: "sans", overlay: 0.1 },
+export const FONT_LABEL: Record<Design["fontHeading"], string> = {
+  geist: "Geist (clean sans)",
+  bricolage: "Bricolage (bold sans)",
+  fraunces: "Fraunces (classic serif)",
+  instrument: "Instrument (editorial serif)",
 };
 
-export const defaultDesign = (theme: Design["theme"] = "minimalist"): Design => ({
-  theme,
-  colors: THEME_PRESETS[theme].colors,
-  fontHeading: THEME_PRESETS[theme].fontHeading,
-  fontBody: THEME_PRESETS[theme].fontBody,
+export type TemplateSpec = {
+  label: string;
+  description: string;
+  colors: Colors;
+  fontHeading: Design["fontHeading"];
+  fontBody: Design["fontBody"];
+  /** visual treatment flags read by SlideCanvas */
+  look: {
+    bg: "flat" | "mesh" | "glow";
+    cards: "outline" | "filled" | "glass" | "rule";
+    headingWeight: number;
+    tracking: string;
+    radius: number;
+    upper?: boolean;
+  };
+  bestFor?: Niche;
+};
+
+export const TEMPLATES: Record<Design["template"], TemplateSpec> = {
+  studio: {
+    label: "Studio",
+    description: "Crisp white, oversized sans, quiet detail",
+    colors: { background: "#FFFFFF", text: "#141821", accent: "#2E5BFF", surface: "#F1F3F7" },
+    fontHeading: "geist", fontBody: "geist",
+    look: { bg: "flat", cards: "filled", headingWeight: 700, tracking: "-0.045em", radius: 28 },
+  },
+  clinic: {
+    label: "Clinic",
+    description: "Calm mint and teal, soft rounded panels",
+    colors: { background: "#F2FAF8", text: "#0D2B28", accent: "#0F7C72", surface: "#FFFFFF" },
+    fontHeading: "bricolage", fontBody: "geist",
+    look: { bg: "flat", cards: "filled", headingWeight: 700, tracking: "-0.035em", radius: 36 },
+    bestFor: "medical",
+  },
+  counsel: {
+    label: "Counsel",
+    description: "Navy and brass, serif authority",
+    colors: { background: "#0F1B33", text: "#F3EEE4", accent: "#C9A45C", surface: "#17264A" },
+    fontHeading: "fraunces", fontBody: "geist",
+    look: { bg: "flat", cards: "rule", headingWeight: 600, tracking: "-0.015em", radius: 6 },
+    bestFor: "legal",
+  },
+  editorial: {
+    label: "Editorial",
+    description: "Magazine serif on stone, fine rules",
+    colors: { background: "#E9E7E2", text: "#1D1B18", accent: "#8C2F3C", surface: "#F6F5F2" },
+    fontHeading: "instrument", fontBody: "geist",
+    look: { bg: "flat", cards: "rule", headingWeight: 400, tracking: "-0.02em", radius: 0 },
+  },
+  mesh: {
+    label: "Aura",
+    description: "Soft colour field with frosted panels",
+    colors: { background: "#EEF0FF", text: "#141631", accent: "#5B4BFF", surface: "#FFFFFF" },
+    fontHeading: "geist", fontBody: "geist",
+    look: { bg: "mesh", cards: "glass", headingWeight: 650, tracking: "-0.04em", radius: 32 },
+  },
+  bold: {
+    label: "Poster",
+    description: "Saturated colour, huge condensed type",
+    colors: { background: "#1438FF", text: "#FFFFFF", accent: "#FFD84A", surface: "#0F2BD1" },
+    fontHeading: "bricolage", fontBody: "geist",
+    look: { bg: "flat", cards: "outline", headingWeight: 800, tracking: "-0.05em", radius: 24, upper: false },
+  },
+  noir: {
+    label: "Night",
+    description: "Deep charcoal with a lit accent",
+    colors: { background: "#0E1016", text: "#EEF0F5", accent: "#7FB7FF", surface: "#171A23" },
+    fontHeading: "geist", fontBody: "geist",
+    look: { bg: "glow", cards: "outline", headingWeight: 650, tracking: "-0.04em", radius: 24 },
+  },
+};
+
+export const defaultDesign = (template: Design["template"] = "studio"): Design => ({
+  template,
+  colors: TEMPLATES[template].colors,
+  fontHeading: TEMPLATES[template].fontHeading,
+  fontBody: TEMPLATES[template].fontBody,
   logoPath: null,
-  logoPosition: "bottom-right",
-  logoSize: 110,
+  logoPosition: "top-left",
+  logoSize: 90,
   handle: "",
-  imageMode: "per-slide",
+  name: "",
+  imageMode: "cover-only",
 });
 
-/** WCAG relative luminance contrast ratio — used to warn about unreadable colour pairs. */
+export const nicheDefaultTemplate = (n: Niche): Design["template"] => (n === "legal" ? "counsel" : "clinic");
+
+/** WCAG contrast ratio. */
 export function contrast(a: string, b: string) {
   const lum = (hex: string) => {
     const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -38,4 +110,16 @@ export function contrast(a: string, b: string) {
   };
   const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
   return (x + 0.05) / (y + 0.05);
+}
+
+export const isDark = (hex: string) => contrast(hex, "#000000") < 7;
+
+/** Converts a pre-v2 design (theme-based) into the v2 shape. */
+export function migrateDesign(raw: unknown): Design | null {
+  const d = raw as Record<string, any> | null;
+  if (!d || typeof d !== "object") return null;
+  if (d.template) return null;
+  const map: Record<string, Design["template"]> = { minimalist: "studio", editorial: "editorial", bold: "bold", luxury: "counsel", corporate: "studio", dark: "noir", colorful: "mesh" };
+  const t = map[d.theme] ?? "studio";
+  return { ...defaultDesign(t), logoPath: d.logoPath ?? null, handle: d.handle ?? "" };
 }
