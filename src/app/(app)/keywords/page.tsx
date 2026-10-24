@@ -7,7 +7,7 @@ import { Button, Empty, ErrorBanner, Field, Input, Select, Skeleton } from "@/co
 import { DataNotice, HashtagPicker, KeywordDetail, KeywordTable, Sources } from "@/components/keywords";
 import { api } from "@/lib/api-client";
 import { NICHES } from "@/lib/niches";
-import { useNiche } from "@/lib/use-niche";
+import { useMarket, useNiche } from "@/lib/use-niche";
 import type { KeywordMetric, SourceStatus } from "@/lib/types";
 
 type Run = { id: string; topic: string; created_at: string; project_id: string | null };
@@ -15,6 +15,7 @@ type Res = { research: { id: string; topic: string; created_at: string; sources:
 
 export default function KeywordsPage() {
   const [niche] = useNiche();
+  const [market] = useMarket();
   const [topic, setTopic] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [audience, setAudience] = useState("");
@@ -41,7 +42,7 @@ export default function KeywordsPage() {
     setBusy(true);
     setError(null);
     try {
-      show(await api<Res>("/api/keywords", { method: "POST", json: { topic, niche, specialty, audience, platform: "instagram" } }));
+      show(await api<Res>("/api/keywords", { method: "POST", json: { topic, niche, market, specialty, audience, platform: "instagram" } }));
       loadRuns();
     } catch (err) {
       setError((err as Error).message);
@@ -87,7 +88,7 @@ export default function KeywordsPage() {
                   {res.research.topic} <span className="text-[13px] text-muted-foreground">checked {new Date(res.research.created_at).toLocaleString()}</span>
                 </p>
                 <Link href={`/create?niche=${niche}&topic=${encodeURIComponent(res.research.topic)}`}>
-                  <Button size="sm" variant="soft"><PenLine className="h-3.5 w-3.5" />Write a carousel on this</Button>
+                  <Button size="sm" variant="soft"><PenLine className="h-3.5 w-3.5" />Write a post on this</Button>
                 </Link>
               </div>
               <Sources sources={res.research.sources} />

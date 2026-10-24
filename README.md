@@ -125,3 +125,16 @@ Create → fill brief & design (or load a saved brand kit) → **Research keywor
 - **Image alignment**: images generated in the frame's aspect (portrait full-bleed/side, landscape inline), composition rules, JPEG output, focus slider.
 - **7 templates**: Studio, Clinic, Counsel, Editorial, Aura, Poster, Night.
 - **New UI**: 3-step create flow with live phone preview; redesigned dashboard, trending, keywords, editor, brand kit, login.
+
+---
+
+## v3 — agency studio, international clients (Oct 2026)
+
+**Run once in Supabase → SQL Editor:** `supabase/migrations/0003_clients_markets.sql` (after 0002).
+
+- **Clients**: each doctor or law firm the agency manages has a profile — type, specialty, market, audience, voice/account notes, tone, language, name/handle/logo, template, colours and an optional branded background. Starting a post from a client fills everything in, and their notes go to the AI on every post.
+- **International markets**: US, UK, Canada, Australia, UAE, Singapore, India, Global. Market drives news and YouTube region, spelling, currency, local context (NHS vs CDC, state vs federal law) and advertising rules (ABA 7.1–7.3, SRA, GMC/ASA, AHPRA, SMC, BCI Rule 36 for India only).
+- **1–7 slides**: single-image posts, 2-slide hook + payoff, 3-slide, and full carousels — prompts and structure adapt.
+- **Import template**: (1) match a design from a screenshot (colours extracted in the browser, closest layout picked), (2) branded background image drawn under every slide with an adjustable text margin, (3) EditSimple `.json` template files — plus "Export current look as a file".
+- **Typography**: UI is now Geist throughout (the serif display face is retired, including the Editorial template).
+- **Unit tests**: `npm test` (Vitest) — 62 tests across research parsing, trends, palette/template import, schemas, slide structure, market-aware prompts, LLM fallback and slide rendering.

@@ -2,6 +2,7 @@
 import { forwardRef, useLayoutEffect, useRef, useState } from "react";
 import type { Design, Slide, SlideItem } from "@/lib/types";
 import { FONT_VARS, TEMPLATES, isDark } from "@/lib/themes";
+import { assetUrlClient } from "@/lib/asset-url";
 
 export type SlideSize = "1080x1350" | "1080x1080";
 export const dims = (size: SlideSize) => {
@@ -58,6 +59,8 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   ref
 ) {
   const { w, h } = dims(size);
+  const P = PAD + (design.bgPath ? design.safeInset ?? 40 : 0);
+  const brandBg = design.bgPath?.startsWith("blob:") ? design.bgPath : assetUrlClient(design.bgPath ?? null);
   const tpl = TEMPLATES[design.template] ?? TEMPLATES.studio;
   const look = tpl.look;
   const kind = slide.kind ?? (index === 0 ? "hook" : index === total - 1 ? "cta" : "statement");
@@ -72,7 +75,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   const hair = alpha(ink, 0.16);
   const headFont = FONT_VARS[design.fontHeading];
   const bodyFont = FONT_VARS[design.fontBody];
-  const headWeight = design.fontHeading === "instrument" ? 400 : look.headingWeight;
+  const headWeight = look.headingWeight;
   const scale = slide.style?.headingScale ?? 1;
 
   const hasImg = !!bgUrl;
@@ -106,7 +109,6 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     else base = len <= 36 ? 84 : len <= 60 ? 72 : 64;
     if (split) base *= 0.82;
     if (size === "1080x1080") base *= 0.9;
-    if (design.fontHeading === "instrument") base *= 1.14; // optically smaller face
     return base * scale * fit;
   })();
   const bodySize = 38 * fit;
@@ -141,7 +143,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       style={{
         fontFamily: headFont,
         fontSize: headSize,
-        lineHeight: design.fontHeading === "instrument" || design.fontHeading === "fraunces" ? 1.04 : 0.98,
+        lineHeight: design.fontHeading === "fraunces" || design.fontHeading === "instrument" ? 1.04 : 0.98,
         fontWeight: headWeight,
         letterSpacing: look.tracking,
         color: fieldInk,
@@ -357,6 +359,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
 
   // ---------- background treatments ----------
   const backdrop = (() => {
+    if (brandBg) return null; // imported branded background replaces template decoration
     if (highlightField) return null;
     if (look.bg === "mesh")
       return (
@@ -373,7 +376,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     if (kind === "hook" && !hasImg) {
       // typographic cover detail, specific to each template
       if (design.template === "counsel" || design.template === "editorial")
-        return <div style={{ position: "absolute", left: PAD, right: PAD, top: h * 0.28, height: 3, background: accent }} />;
+        return <div style={{ position: "absolute", left: P, right: P, top: h * 0.28, height: 3, background: accent }} />;
       if (design.template === "clinic")
         return <div style={{ position: "absolute", width: 760, height: 760, right: -300, bottom: -260, borderRadius: "46% 54% 42% 58%", background: alpha(accent, 0.12) }} />;
       if (design.template === "bold") return <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 24, background: accent }} />;
@@ -409,6 +412,10 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       data-slide-id={slide.id}
       style={{ width: w, height: h, position: "relative", overflow: "hidden", background: fieldBg, color: fieldInk, fontFamily: bodyFont }}
     >
+      {brandBg && !highlightField && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={brandBg} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      )}
       {backdrop}
 
       {fullBleed && (
@@ -431,8 +438,8 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         style={{
           position: "absolute",
           top: 64,
-          left: PAD,
-          right: split ? "calc(44% + 40px)" : PAD,
+          left: P,
+          right: split ? "calc(44% + 40px)" : P,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -457,8 +464,8 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
           position: "absolute",
           top: 150,
           bottom: 150,
-          left: PAD,
-          right: split ? "calc(44% + 48px)" : PAD,
+          left: P,
+          right: split ? "calc(44% + 48px)" : P,
           display: "flex",
           flexDirection: framed && slide.layout === "bottom" ? "column-reverse" : "column",
           gap: 44 * fit,
@@ -479,8 +486,8 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       <div
         style={{
           position: "absolute",
-          left: PAD,
-          right: split ? "calc(44% + 40px)" : PAD,
+          left: P,
+          right: split ? "calc(44% + 40px)" : P,
           bottom: 60,
           display: "flex",
           alignItems: "center",

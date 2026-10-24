@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { AiTag, Button, Chip, ErrorBanner, Field, Input, Segmented, Select, Skeleton, Spinner, Textarea } from "@/components/ui";
 import { ColorControls, FontControls, IdentityControls, TemplatePicker } from "@/components/design-controls";
+import { ImportTemplateButton } from "@/components/import-template";
 import { ScaledSlide, SlideCanvas, dims, type SlideSize } from "@/components/slide-canvas";
 import { api } from "@/lib/api-client";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -308,7 +309,7 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
     saveDeck(next, after + 1);
   }
   function deleteSlide(i: number) {
-    if (slides.length <= 3) return setError("Keep at least 3 slides.");
+    if (slides.length <= 1) return setError("A post needs at least one slide.");
     saveDeck(slides.filter((_, k) => k !== i), Math.min(i, slides.length - 2));
   }
 
@@ -383,7 +384,7 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <input
-          className="min-w-0 flex-1 bg-transparent font-display text-[30px] leading-tight outline-none placeholder:text-muted-foreground sm:text-[34px]"
+          className="min-w-0 flex-1 bg-transparent text-[24px] font-semibold leading-tight tracking-[-0.03em] outline-none placeholder:text-muted-foreground sm:text-[28px]"
           value={bundle.project.title}
           onChange={(e) => setBundle({ ...bundle, project: { ...project, title: e.target.value } })}
           onBlur={(e) => api(`/api/projects/${projectId}`, { method: "PATCH", json: { title: e.target.value || "Untitled carousel" } }).catch(() => undefined)}
@@ -553,6 +554,7 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
                 />
               ) : (
                 <div className="space-y-6">
+                  <ImportTemplateButton design={design} onApply={updateDesign} heading={slides[0]?.heading} className="w-full" />
                   <TemplatePicker design={design} onChange={updateDesign} heading={slides[0]?.heading} niche={niche} columns={3} />
                   <ColorControls design={design} onChange={updateDesign} />
                   <FontControls design={design} onChange={updateDesign} />

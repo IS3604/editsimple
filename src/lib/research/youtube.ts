@@ -33,7 +33,7 @@ async function videoStats(ids: string[]): Promise<VideoStat[]> {
 }
 
 /** Engagement of recent (≤90 days) relevant videos for a keyword. */
-export async function keywordVideoStats(keyword: string) {
+export async function keywordVideoStats(keyword: string, regionCode: string = env.region) {
   const u = new URL(`${BASE}/search`);
   u.search = new URLSearchParams({
     part: "id",
@@ -42,7 +42,7 @@ export async function keywordVideoStats(keyword: string) {
     maxResults: "15",
     order: "relevance",
     publishedAfter: new Date(Date.now() - 90 * 86400000).toISOString(),
-    regionCode: env.region,
+    regionCode,
     relevanceLanguage: env.language,
     key: env.youtubeKey,
   }).toString();
@@ -93,7 +93,7 @@ export async function trendingVideos(max = 20): Promise<VideoStat[]> {
 }
 
 /** Most-viewed videos in a niche from the last N days (real stats). Costs 101 quota units. */
-export async function nichePopularVideos(query: string, days = 7, max = 12): Promise<VideoStat[]> {
+export async function nichePopularVideos(query: string, days = 7, max = 12, regionCode: string = env.region): Promise<VideoStat[]> {
   const u = new URL(`${BASE}/search`);
   u.search = new URLSearchParams({
     part: "id",
@@ -102,7 +102,7 @@ export async function nichePopularVideos(query: string, days = 7, max = 12): Pro
     maxResults: String(max),
     order: "viewCount",
     publishedAfter: new Date(Date.now() - days * 86400000).toISOString(),
-    regionCode: env.region,
+    regionCode,
     relevanceLanguage: env.language,
     key: env.youtubeKey,
   }).toString();

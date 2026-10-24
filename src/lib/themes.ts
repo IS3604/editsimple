@@ -5,14 +5,14 @@ export const FONT_VARS: Record<Design["fontHeading"], string> = {
   geist: "'Geist Variable', ui-sans-serif, system-ui, sans-serif",
   bricolage: "'Bricolage Grotesque Variable', ui-sans-serif, sans-serif",
   fraunces: "'Fraunces Variable', ui-serif, Georgia, serif",
-  instrument: "'Instrument Serif', ui-serif, Georgia, serif",
+  instrument: "'Fraunces Variable', ui-serif, Georgia, serif", // retired face — mapped to Fraunces
 };
 
 export const FONT_LABEL: Record<Design["fontHeading"], string> = {
-  geist: "Geist (clean sans)",
-  bricolage: "Bricolage (bold sans)",
-  fraunces: "Fraunces (classic serif)",
-  instrument: "Instrument (editorial serif)",
+  geist: "Geist",
+  bricolage: "Bricolage",
+  fraunces: "Fraunces",
+  instrument: "Fraunces",
 };
 
 export type TemplateSpec = {
@@ -61,8 +61,8 @@ export const TEMPLATES: Record<Design["template"], TemplateSpec> = {
     label: "Editorial",
     description: "Magazine serif on stone, fine rules",
     colors: { background: "#E9E7E2", text: "#1D1B18", accent: "#8C2F3C", surface: "#F6F5F2" },
-    fontHeading: "instrument", fontBody: "geist",
-    look: { bg: "flat", cards: "rule", headingWeight: 400, tracking: "-0.02em", radius: 0 },
+    fontHeading: "fraunces", fontBody: "geist",
+    look: { bg: "flat", cards: "rule", headingWeight: 500, tracking: "-0.025em", radius: 0 },
   },
   mesh: {
     label: "Aura",
@@ -98,6 +98,7 @@ export const defaultDesign = (template: Design["template"] = "studio"): Design =
   handle: "",
   name: "",
   imageMode: "cover-only",
+  bgPath: null,
 });
 
 export const nicheDefaultTemplate = (n: Niche): Design["template"] => (n === "legal" ? "counsel" : "clinic");

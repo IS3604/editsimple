@@ -2,6 +2,7 @@ import "server-only";
 import { chatJSON } from "@/lib/ai/llm";
 import { KeywordIdeasSchema, ScoresSchema, keywordIdeasPrompt, systemFor, viralScoringPrompt } from "@/lib/ai/prompts";
 import type { Niche } from "@/lib/niches";
+import { MARKETS, type MarketCode } from "@/lib/markets";
 import type { KeywordMetric, SourceStatus } from "@/lib/types";
 import { slugHashtag } from "@/lib/utils";
 import { adsConfigured, adsTrend, keywordIdeas } from "./googleAds";
@@ -12,6 +13,7 @@ import { keywordVideoStats, youtubeConfigured } from "./youtube";
 export type ResearchInput = {
   topic: string;
   niche: Niche;
+  market: MarketCode;
   specialty?: string;
   platform: string;
   audience?: string;
@@ -94,8 +96,8 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
   // AI search-phrase ideas (labelled)
   const ideas = await track(sources, "ai_suggestions", () =>
     chatJSON({
-      system: systemFor(input.niche),
-      user: keywordIdeasPrompt({ topic: input.topic, niche: input.niche, specialty: input.specialty, platform: input.platform, audience: input.audience }),
+      system: systemFor(input.niche, input.market),
+      user: keywordIdeasPrompt({ topic: input.topic, niche: input.niche, market: input.market, specialty: input.specialty, platform: input.platform, audience: input.audience }),
       schema: KeywordIdeasSchema,
       temperature: 0.5,
     })
@@ -114,13 +116,13 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
       "google_news",
       async () => {
         const targets = rows.slice(0, MAX_NEWS);
-        const res = await Promise.allSettled(targets.map((r) => newsMentions(r.keyword)));
+        const res = await Promise.allSettled(targets.map((r) => newsMentions(r.keyword, input.market)));
         res.forEach((x, i) => {
           if (x.status === "fulfilled") targets[i].news_mentions = x.value;
         });
         if (res.every((x) => x.status === "rejected")) throw (res[0] as PromiseRejectedResult).reason;
       },
-      "Articles mentioning the phrase in the last 7 days (Google News, India)"
+      `Articles mentioning the phrase in the last 7 days (Google News, ${MARKETS[input.market].label})`
     ),
     track(
       sources,
@@ -147,7 +149,7 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
           "youtube_data_api",
           async () => {
             const targets = rows.slice(0, MAX_YOUTUBE);
-            const res = await Promise.allSettled(targets.map((r) => keywordVideoStats(r.keyword)));
+            const res = await Promise.allSettled(targets.map((r) => keywordVideoStats(r.keyword, MARKETS[input.market].yt)));
             res.forEach((x, i) => {
               if (x.status === "fulfilled" && x.value.sample_size > 0) targets[i].youtube_stats = x.value;
             });
@@ -167,8 +169,8 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
   // Viral potential — AI estimate grounded on the measured signals above
   const scores = await track(sources, "ai_viral_score", () =>
     chatJSON({
-      system: systemFor(input.niche),
-      user: viralScoringPrompt(input.topic, input.niche, input.audience ?? "", rows),
+      system: systemFor(input.niche, input.market),
+      user: viralScoringPrompt(input.topic, input.niche, input.market, input.audience ?? "", rows),
       schema: ScoresSchema,
       temperature: 0.2,
     })

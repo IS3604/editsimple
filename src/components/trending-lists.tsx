@@ -19,7 +19,7 @@ export type Trending = {
   fetched_at: string;
 };
 
-export function useTrending(niche: Niche) {
+export function useTrending(niche: Niche, market: string = "US") {
   const [data, setData] = useState<Trending | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,12 +27,12 @@ export function useTrending(niche: Niche) {
     (refresh = false) => {
       setError(null);
       setLoading(true);
-      api<Trending>(`/api/trending?niche=${niche}${refresh ? "&refresh=1" : ""}`)
+      api<Trending>(`/api/trending?niche=${niche}&market=${market}${refresh ? "&refresh=1" : ""}`)
         .then((d) => setData(d))
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     },
-    [niche]
+    [niche, market]
   );
   useEffect(() => {
     setData(null);
@@ -66,7 +66,7 @@ export function IdeaCards({ niche, data, limit = 6 }: { niche: Niche; data: Tren
             <AiTag>Idea</AiTag>
           </div>
           <h3 className="mt-3 text-[17px] leading-snug">{idea.topic}</h3>
-          <p className="mt-1.5 font-display text-[19px] italic leading-snug text-accent">“{idea.hook}”</p>
+          <p className="mt-2 border-l-2 border-accent pl-3 text-[14px] font-medium leading-snug text-foreground/80">{idea.hook}</p>
           <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">{idea.why_now}</p>
           {idea.headlines[0] && (
             <a href={idea.headlines[0].link} target="_blank" rel="noreferrer" className="mt-3 line-clamp-1 text-xs text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground">
@@ -75,7 +75,7 @@ export function IdeaCards({ niche, data, limit = 6 }: { niche: Niche; data: Tren
           )}
           <div className="mt-auto pt-4">
             <Link href={writeHref(niche, idea.topic, idea.hook)}>
-              <Button size="sm" variant="soft"><PenLine className="h-3.5 w-3.5" />Write this carousel</Button>
+              <Button size="sm" variant="soft"><PenLine className="h-3.5 w-3.5" />Write this post</Button>
             </Link>
           </div>
         </article>

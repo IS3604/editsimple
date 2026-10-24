@@ -6,6 +6,7 @@ import { getProject, selectedKeywords } from "@/lib/data";
 import { chatJSON } from "@/lib/ai/llm";
 import { CaptionSchema, captionPrompt, systemFor } from "@/lib/ai/prompts";
 import { nicheOf } from "@/lib/niches";
+import { marketOf } from "@/lib/markets";
 
 export const maxDuration = 60;
 type Ctx = { params: Promise<{ id: string }> };
@@ -28,9 +29,10 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
   const { keywords, hashtags } = await selectedKeywords(sb, id);
 
   const out = await chatJSON({
-    system: systemFor(nicheOf(brief.niche)),
+    system: systemFor(nicheOf(brief.niche), marketOf(brief.market)),
     user: captionPrompt({
       niche: nicheOf(brief.niche),
+      market: marketOf(brief.market),
       platform,
       topic: brief.topic,
       audience: brief.audience ?? "",

@@ -21,9 +21,14 @@ const Body = z.object({
   logo_path: z.string().max(400).nullable().optional(),
   display_name: z.string().max(60).nullable().optional(),
   handle: z.string().max(60).nullable().optional(),
+  specialty: z.string().max(80).nullable().optional(),
+  market: z.enum(["US", "UK", "CA", "AU", "AE", "SG", "IN", "GLOBAL"]).default("US"),
+  audience: z.string().max(200).nullable().optional(),
+  notes: z.string().max(600).nullable().optional(),
+  bg_path: z.string().max(400).nullable().optional(),
   tone: z.string().max(80).optional(),
   language: z.string().max(40).optional(),
-  is_default: z.boolean().default(true),
+  is_default: z.boolean().default(false),
 });
 
 export const PUT = handle(async (req: Request) => {

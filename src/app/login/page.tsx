@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { Button, ErrorBanner, Field, Input } from "@/components/ui";
+import { Wordmark } from "@/components/app-shell";
 import { ScaledSlide, SlideCanvas, type CanvasSlide } from "@/components/slide-canvas";
 import { defaultDesign } from "@/lib/themes";
 import type { Design } from "@/lib/types";
@@ -95,11 +96,11 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <section className="flex flex-col justify-between px-6 py-8 sm:px-12 lg:px-16">
-        <span className="font-display text-[28px] leading-none">EditSimple</span>
+        <Wordmark />
         <div className="mx-auto w-full max-w-sm py-12">
-          <h1 className="text-[44px] leading-[1.02]">{mode === "signin" ? "Welcome back" : "Create your studio"}</h1>
+          <h1 className="text-[36px] leading-[1.08]">{mode === "signin" ? "Sign in to the studio" : "Create your account"}</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-            Carousels for doctors and lawyers — researched, written and designed in minutes, accurate by default.
+            The content studio for EditSimple’s doctor and law-firm clients — research, write, design and deliver posts in one place.
           </p>
           <form onSubmit={submit} className="mt-8 space-y-4">
             <Field label="Email">
@@ -121,7 +122,7 @@ export default function LoginPage() {
             </button>
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">Educational content only. EditSimple keeps posts within medical and Bar Council advertising norms.</p>
+        <p className="text-xs text-muted-foreground">Posts follow medical and legal advertising norms for each client’s market.</p>
       </section>
 
       <section className="relative hidden overflow-hidden bg-[#121521] lg:block" aria-hidden>
@@ -141,8 +142,8 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="absolute bottom-10 left-12 right-12 max-w-md font-display text-[28px] leading-snug text-white/90">
-          From this week&apos;s headline to a post your audience saves.
+        <p className="absolute bottom-10 left-12 right-12 max-w-md text-[24px] font-semibold leading-snug tracking-[-0.03em] text-white/90">
+          From this week’s headline to a client-ready post.
         </p>
       </section>
       <style>{`@keyframes deal{from{opacity:0;transform:translate(0,80px) rotate(0deg) scale(.92)}}`}</style>

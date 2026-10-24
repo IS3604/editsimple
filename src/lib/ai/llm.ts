@@ -27,12 +27,12 @@ function candidates(prefer?: "groq" | "openai"): Candidate[] {
   return order;
 }
 
-const isSkippable = (e: unknown) => {
+export const isSkippable = (e: unknown) => {
   const status = (e as { status?: number })?.status;
   return status === 404 || status === 400 || status === 429 || status === 503 || (status ?? 0) >= 500;
 };
 
-function parseLoose(raw: string) {
+export function parseLoose(raw: string) {
   const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
   return JSON.parse(cleaned);
 }

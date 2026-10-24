@@ -3,12 +3,11 @@ import type { Metadata } from "next";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/fraunces";
-import "@fontsource/instrument-serif/400.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "EditSimple — carousels for doctors & lawyers",
-  description: "Research what's trending, write accurate carousels and export them in minutes.",
+  title: "EditSimple Studio",
+  description: "Content studio for doctor and law-firm clients.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,43 +1,45 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ArrowLeft, Check, Lightbulb, Loader2, Plus, RefreshCw, Sparkles, Wand2 } from "lucide-react";
 import { AiTag, Button, Chip, ErrorBanner, Field, Input, Segmented, Select, Skeleton, Textarea } from "@/components/ui";
 import { ColorControls, FontControls, IdentityControls, ImageModeControl, TemplatePicker } from "@/components/design-controls";
 import { DataNotice, HashtagPicker, KeywordDetail, KeywordTable, Sources } from "@/components/keywords";
 import { PhonePreview } from "@/components/phone-preview";
+import { ImportTemplateButton } from "@/components/import-template";
+import { MARKETS, MARKET_CODES, marketOf, type MarketCode } from "@/lib/markets";
+import { clientDesign, type Client } from "@/lib/clients";
 import { api } from "@/lib/api-client";
 import { NICHES, type Niche } from "@/lib/niches";
-import { DesignSchema, type BriefInput, type Design, type KeywordMetric, type SourceStatus } from "@/lib/types";
+import type { BriefInput, Design, KeywordMetric, SourceStatus } from "@/lib/types";
 import { defaultDesign, nicheDefaultTemplate } from "@/lib/themes";
-import { useNiche } from "@/lib/use-niche";
+import { useMarket, useNiche } from "@/lib/use-niche";
 import { cn } from "@/lib/utils";
 
-type Brand = { id: string; name: string; niche: Niche | null; display_name: string | null; handle: string | null; theme: string; colors: Design["colors"]; font_heading: Design["fontHeading"]; font_body: Design["fontBody"]; logo_path: string | null; tone: string | null; language: string | null; is_default: boolean };
 type Idea = { topic: string; angle: string; format: string; why: string };
-type BriefHelp = { sharper_topic: string; audiences: string[]; objective: BriefInput["objective"]; tone: string; keywords: string[]; hooks: string[]; tip: string };
+type BriefHelp = { sharper_topic: string; audiences: string[]; objective: BriefInput["objective"]; tone: string; keywords: string[]; hooks: string[]; slide_count: number; tip: string };
 type Row = KeywordMetric & { id: string };
 
 const STEPS = ["What to post", "Look", "Keywords"] as const;
 
-const brandDesign = (b: Brand, base: Design): Design => {
-  const parsed = DesignSchema.shape.template.safeParse(b.theme);
-  const t = parsed.success ? parsed.data : base.template;
-  return { ...base, template: t, colors: DesignSchema.shape.colors.safeParse(b.colors).data ?? base.colors, fontHeading: DesignSchema.shape.fontHeading.safeParse(b.font_heading).data ?? base.fontHeading, fontBody: DesignSchema.shape.fontBody.safeParse(b.font_body).data ?? base.fontBody, logoPath: b.logo_path, name: b.display_name ?? base.name, handle: b.handle ?? base.handle };
-};
-
 export default function CreatePage() {
   const router = useRouter();
   const [wsNiche, setWsNiche] = useNiche();
+  const [wsMarket, setWsMarket] = useMarket();
+  const [clients, setClients] = useState<Client[]>([]);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     niche: "medical" as Niche,
+    market: "US" as MarketCode,
+    clientId: null as string | null,
+    clientNotes: "",
     specialty: "",
     topic: "",
     hook: "",
     audience: "",
     platform: "instagram" as BriefInput["platform"],
-    slideCount: 7 as 6 | 7,
+    slideCount: 6,
     objective: "education" as BriefInput["objective"],
     tone: "warm, clear and expert",
     language: "English",
@@ -55,14 +57,42 @@ export default function CreatePage() {
     inited.current = true;
     const q = new URLSearchParams(window.location.search);
     const n = (q.get("niche") === "legal" ? "legal" : q.get("niche") === "medical" ? "medical" : null) ?? wsNiche;
-    setForm((f) => ({ ...f, niche: n, topic: (q.get("topic") ?? "").slice(0, 200), hook: (q.get("hook") ?? "").slice(0, 140), design: defaultDesign(nicheDefaultTemplate(n)) }));
-    api<{ brands: Brand[] }>("/api/brand")
+    setForm((f) => ({ ...f, niche: n, market: wsMarket, topic: (q.get("topic") ?? "").slice(0, 200), hook: (q.get("hook") ?? "").slice(0, 140), design: defaultDesign(nicheDefaultTemplate(n)) }));
+    const wanted = q.get("client");
+    api<{ brands: Client[] }>("/api/brand")
       .then(({ brands }) => {
-        const b = brands.find((x) => x.is_default && (!x.niche || x.niche === n)) ?? brands.find((x) => x.niche === n);
-        if (b) setForm((f) => ({ ...f, design: brandDesign(b, f.design), tone: b.tone || f.tone, language: b.language || f.language }));
+        const list = brands.map((b) => ({ ...b, market: marketOf(b.market) }));
+        setClients(list);
+        const c = list.find((x) => x.id === wanted);
+        if (c) applyClient(c);
       })
       .catch(() => undefined);
-  }, [wsNiche]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsNiche, wsMarket]);
+
+  function applyClient(c: Client | null) {
+    if (!c) {
+      setForm((f) => ({ ...f, clientId: null, clientNotes: "" }));
+      return;
+    }
+    const n: Niche = c.niche ?? form.niche;
+    setWsNiche(n);
+    setWsMarket(c.market);
+    setForm((f) => ({
+      ...f,
+      clientId: c.id ?? null,
+      clientNotes: c.notes ?? "",
+      niche: n,
+      market: c.market,
+      specialty: c.specialty ?? "",
+      audience: c.audience ?? f.audience,
+      tone: c.tone || f.tone,
+      language: c.language || f.language,
+      design: { ...clientDesign(c), imageMode: f.design.imageMode },
+    }));
+    setIdeas(null);
+    setHelp(null);
+  }
 
   const changeNiche = (n: Niche) => {
     setWsNiche(n);
@@ -77,14 +107,14 @@ export default function CreatePage() {
   const loadIdeas = useCallback(async () => {
     setIdeasBusy(true);
     try {
-      const r = await api<{ ideas: Idea[] }>("/api/suggest", { method: "POST", json: { mode: "ideas", niche: form.niche, specialty: form.specialty, audience: form.audience } });
+      const r = await api<{ ideas: Idea[] }>("/api/suggest", { method: "POST", json: { mode: "ideas", niche: form.niche, market: form.market, specialty: form.specialty, audience: form.audience, clientNotes: form.clientNotes } });
       setIdeas(r.ideas);
     } catch {
       setIdeas([]);
     } finally {
       setIdeasBusy(false);
     }
-  }, [form.niche, form.specialty, form.audience]);
+  }, [form.niche, form.market, form.specialty, form.audience, form.clientNotes]);
 
   // ---------- AI: brief help (debounced on topic) ----------
   const [help, setHelp] = useState<BriefHelp | null>(null);
@@ -97,7 +127,7 @@ export default function CreatePage() {
       helpFor.current = t;
       setHelpBusy(true);
       try {
-        setHelp(await api<BriefHelp>("/api/suggest", { method: "POST", json: { mode: "brief", niche: form.niche, specialty: form.specialty, topic: t, audience: form.audience, objective: form.objective } }));
+        setHelp(await api<BriefHelp>("/api/suggest", { method: "POST", json: { mode: "brief", niche: form.niche, market: form.market, specialty: form.specialty, topic: t, audience: form.audience, objective: form.objective, clientNotes: form.clientNotes } }));
       } catch {
         /* suggestions are optional */
       } finally {
@@ -105,7 +135,7 @@ export default function CreatePage() {
       }
     }, 1200);
     return () => clearTimeout(timer);
-  }, [form.topic, form.niche, form.specialty, form.audience, form.objective]);
+  }, [form.topic, form.niche, form.market, form.specialty, form.audience, form.objective, form.clientNotes]);
 
   // ---------- project + research ----------
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -117,7 +147,7 @@ export default function CreatePage() {
   const [focus, setFocus] = useState<string | null>(null);
   const [custom, setCustom] = useState("");
 
-  const sig = JSON.stringify([form.niche, form.specialty, form.topic, form.hook, form.audience, form.platform, form.slideCount, form.objective, form.tone, form.language, form.keywords, form.size]);
+  const sig = JSON.stringify([form.niche, form.market, form.clientId, form.specialty, form.topic, form.hook, form.audience, form.platform, form.slideCount, form.objective, form.tone, form.language, form.keywords, form.size]);
 
   async function startResearch(pid: string) {
     setResearching(true);
@@ -125,7 +155,7 @@ export default function CreatePage() {
     try {
       const r = await api<{ research: { id: string; sources: SourceStatus[] }; rows: Row[] }>("/api/keywords", {
         method: "POST",
-        json: { topic: form.topic, niche: form.niche, specialty: form.specialty, platform: form.platform, audience: form.audience, userKeywords: form.keywords, projectId: pid },
+        json: { topic: form.topic, niche: form.niche, market: form.market, specialty: form.specialty, platform: form.platform, audience: form.audience, userKeywords: form.keywords, projectId: pid },
       });
       setResearch({ id: r.research.id, rows: r.rows, sources: r.research.sources });
       setFocus(r.rows.find((x) => x.kind === "seed")?.keyword ?? null);
@@ -145,7 +175,7 @@ export default function CreatePage() {
       if (projectId) await api(`/api/projects/${projectId}`, { method: "DELETE" }).catch(() => undefined);
       const { project } = await api<{ project: { id: string } }>("/api/projects", {
         method: "POST",
-        json: { ...form, industry: form.specialty, referenceUrl: "" },
+        json: { ...form, clientNotes: undefined, industry: form.specialty, referenceUrl: "" },
       });
       setProjectId(project.id);
       briefSig.current = sig;
@@ -223,8 +253,8 @@ export default function CreatePage() {
       {/* stepper */}
       <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <h1 className="text-[40px] leading-[1.05] sm:text-[46px]">New carousel</h1>
-          <p className="mt-2 text-[15px] text-muted-foreground">Three short steps. AI helps at each one — you stay in charge of what gets published.</p>
+          <h1 className="text-[32px] leading-[1.1] sm:text-[38px]">New post</h1>
+          <p className="mt-2 text-[15px] text-muted-foreground">Pick the client, the topic and the look. AI helps at each step — your team stays in charge of what gets published.</p>
         </div>
         <ol className="flex items-center gap-2 text-[13px]">
           {STEPS.map((s, i) => (
@@ -257,17 +287,37 @@ export default function CreatePage() {
           {step === 0 && (
             <div className="space-y-6">
               <section className="rounded-2xl border bg-card p-6">
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="You create for">
+                <Field
+                  label="Client"
+                  aside={<Link href="/clients" className="text-[13px] text-muted-foreground hover:text-foreground">Manage clients</Link>}
+                  hint={form.clientId ? "Specialty, market, voice notes and look come from this client's profile." : "Pick a client to load their profile, or continue without one."}
+                >
+                  <div className="flex flex-wrap gap-1.5">
+                    <Chip active={!form.clientId} onClick={() => applyClient(null)}>No client</Chip>
+                    {clients.map((c) => (
+                      <Chip key={c.id} active={form.clientId === c.id} onClick={() => applyClient(c)}>
+                        <span className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10" style={{ background: c.colors.accent }} />
+                        {c.name}
+                      </Chip>
+                    ))}
+                  </div>
+                </Field>
+                <div className="mt-6 grid gap-5 sm:grid-cols-3">
+                  <Field label="Client type">
                     <Segmented
                       className="w-full"
                       value={form.niche}
                       onChange={changeNiche}
                       options={[
-                        { value: "medical", label: "Doctors" },
-                        { value: "legal", label: "Lawyers" },
+                        { value: "medical", label: "Doctor" },
+                        { value: "legal", label: "Lawyer" },
                       ]}
                     />
+                  </Field>
+                  <Field label="Audience is in">
+                    <Select value={form.market} onChange={(e) => { const m = e.target.value as MarketCode; set("market", m); setWsMarket(m); setIdeas(null); setHelp(null); helpFor.current = ""; }}>
+                      {MARKET_CODES.map((c) => <option key={c} value={c}>{MARKETS[c].label}</option>)}
+                    </Select>
                   </Field>
                   <Field label="Specialty">
                     <Select value={form.specialty} onChange={(e) => set("specialty", e.target.value)}>
@@ -293,7 +343,7 @@ export default function CreatePage() {
                       value={form.topic}
                       onChange={(e) => set("topic", e.target.value)}
                       placeholder={form.niche === "legal" ? "e.g. What tenants can do when the deposit isn't returned" : "e.g. Heart attack signs women often miss"}
-                      className="min-h-[76px] font-display text-[22px] leading-snug placeholder:font-sans placeholder:text-[15px]"
+                      className="min-h-[76px] text-[19px] font-medium leading-snug tracking-[-0.015em] placeholder:font-normal placeholder:text-[15px] placeholder:tracking-normal"
                     />
                   </Field>
                 </div>
@@ -366,6 +416,11 @@ export default function CreatePage() {
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
+                          {help.slide_count > 0 && (
+                            <Chip active={form.slideCount === help.slide_count} onClick={() => set("slideCount", help.slide_count)}>
+                              {help.slide_count === 1 ? "Make it a single-image post" : `Use ${help.slide_count} slides`}
+                            </Chip>
+                          )}
                           <Chip active={form.objective === help.objective && form.tone === help.tone} onClick={() => setForm((f) => ({ ...f, objective: help.objective, tone: help.tone }))}>
                             Use “{help.objective}” with a {help.tone} tone
                           </Chip>
@@ -390,7 +445,7 @@ export default function CreatePage() {
 
               <section className="rounded-2xl border bg-card p-6">
                 <h2 className="text-[15px]">Post settings</h2>
-                <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
                   <Field label="Platform">
                     <Select value={form.platform} onChange={(e) => set("platform", e.target.value as BriefInput["platform"])}>
                       <option value="instagram">Instagram</option>
@@ -398,27 +453,25 @@ export default function CreatePage() {
                       <option value="both">Both</option>
                     </Select>
                   </Field>
-                  <Field label="Slides">
-                    <Segmented className="w-full" value={form.slideCount} onChange={(v) => set("slideCount", v)} options={[{ value: 6, label: "6" }, { value: 7, label: "7" }]} />
+                  <Field label="Slides" className="sm:col-span-2" hint={form.slideCount === 1 ? "Single image post — the whole point on one slide." : form.slideCount === 2 ? "Cover plus one value slide." : undefined}>
+                    <Segmented className="w-full" value={form.slideCount} onChange={(v) => set("slideCount", v)} options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: String(n) }))} />
                   </Field>
                   <Field label="Goal">
                     <Select value={form.objective} onChange={(e) => set("objective", e.target.value as BriefInput["objective"])}>
-                      <option value="education">Teach something</option>
-                      <option value="engagement">Get comments</option>
-                      <option value="awareness">Reach more people</option>
-                      <option value="leads">Grow followers</option>
+                      <option value="education">Educate</option>
+                      <option value="engagement">Engage</option>
+                      <option value="awareness">Reach</option>
+                      <option value="leads">Grow</option>
                     </Select>
                   </Field>
                   <Field label="Language">
                     <Select value={form.language} onChange={(e) => set("language", e.target.value)}>
-                      {["English", "Hinglish", "Hindi", "Marathi", "Tamil", "Telugu", "Bengali", "Gujarati", "Kannada"].map((l) => <option key={l}>{l}</option>)}
+                      {["English", "Spanish", "French", "German", "Arabic", "Portuguese", "Hindi"].map((l) => <option key={l}>{l}</option>)}
                     </Select>
                   </Field>
                 </div>
                 <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                  {form.niche === "legal"
-                    ? "Calls to action stay educational — save, share, follow — in line with Bar Council of India rules on advocate advertising."
-                    : "Content stays educational and points readers to a doctor for symptoms, in line with medical professional-conduct norms."}
+                  {`Copy follows ${form.niche === "legal" ? "lawyer" : "medical"} advertising norms for ${MARKETS[form.market].label}, uses ${MARKETS[form.market].spelling} and stays educational.`}
                 </p>
               </section>
 
@@ -434,9 +487,12 @@ export default function CreatePage() {
           {step === 1 && (
             <div className="space-y-6">
               <section className="rounded-2xl border bg-card p-6">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="text-[15px]">Template</h2>
-                  <span className="text-xs text-muted-foreground">Shown with your own cover line</span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-[15px]">Template</h2>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Shown with your own cover line</p>
+                  </div>
+                  <ImportTemplateButton design={form.design} onApply={setDesign} heading={coverSlide.heading} />
                 </div>
                 <div className="mt-4">
                   <TemplatePicker design={form.design} onChange={setDesign} heading={coverSlide.heading} niche={form.niche} />
@@ -525,7 +581,7 @@ export default function CreatePage() {
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => setStep(1)}><ArrowLeft className="h-4 w-4" />Back</Button>
                 <Button size="lg" variant="accent" onClick={generate} loading={busy} disabled={!research || !selectedCount}>
-                  <Sparkles className="h-4 w-4" /> Write my carousel
+                  <Sparkles className="h-4 w-4" /> Write the post
                 </Button>
               </div>
             </div>

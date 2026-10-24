@@ -29,7 +29,7 @@
     --ring: var(--accent);
     --radius: 0.7rem;
     --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-    --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+    --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
     --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
   }
   [data-niche="medical"] { --accent: 174 78% 27%; --accent-soft: 170 45% 93%; }
@@ -38,7 +38,7 @@
   * { @apply border-border; }
   html { -webkit-font-smoothing: antialiased; }
   body { @apply bg-background text-foreground font-sans; font-feature-settings: "ss01", "cv11"; }
-  h1 { @apply font-display font-normal tracking-[-0.01em]; }
+  h1 { @apply font-sans font-semibold tracking-[-0.038em]; }
   h2, h3 { @apply font-semibold tracking-[-0.015em]; }
   ::selection { background: hsl(var(--accent) / .18); }
   :focus-visible { outline: 2px solid hsl(var(--accent)); outline-offset: 2px; }

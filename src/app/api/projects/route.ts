@@ -28,6 +28,8 @@ export const POST = handle(async (req: Request) => {
     project_id: project.id,
     topic: b.topic,
     niche: b.niche,
+    market: b.market,
+    client_id: b.clientId ?? null,
     specialty: b.specialty || null,
     hook: b.hook || null,
     industry: b.industry || b.specialty,

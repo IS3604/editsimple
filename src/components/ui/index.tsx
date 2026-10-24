@@ -138,7 +138,7 @@ export function ErrorBanner({ error, onRetry }: { error: string | null; onRetry?
 export function Empty({ title, children, action }: { title: string; children?: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed bg-card/60 px-6 py-14 text-center">
-      <p className="font-display text-2xl">{title}</p>
+      <p className="text-xl font-semibold tracking-[-0.02em]">{title}</p>
       {children && <p className="max-w-md text-sm text-muted-foreground">{children}</p>}
       {action}
     </div>

@@ -25,15 +25,15 @@ export default function ProjectsPage() {
   return (
     <div>
       <PageHeader
-        title="Projects"
-        subtitle="Every carousel you've made. Unfinished ones pick up where they stopped."
-        actions={<Link href="/create"><Button variant="accent"><PenLine className="h-4 w-4" />New carousel</Button></Link>}
+        title="Posts"
+        subtitle="Everything your team has made for clients. Unfinished posts pick up where they stopped."
+        actions={<Link href="/create"><Button variant="accent"><PenLine className="h-4 w-4" />New post</Button></Link>}
       />
       <ErrorBanner error={error} onRetry={() => { setError(null); load(); }} />
       {items === null && !error ? (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">{Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="aspect-[4/5]" />)}</div>
       ) : items && items.length === 0 ? (
-        <Empty title="No carousels yet" action={<Link href="/create"><Button className="mt-4" variant="accent">Create your first</Button></Link>}>
+        <Empty title="No posts yet" action={<Link href="/create"><Button className="mt-4" variant="accent">Create your first</Button></Link>}>
           Pick a topic and EditSimple researches it, writes the slides, designs them and drafts the caption.
         </Empty>
       ) : (

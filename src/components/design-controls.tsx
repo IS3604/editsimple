@@ -90,7 +90,7 @@ export function ColorControls({ design, onChange }: { design: Design; onChange: 
 }
 
 export function FontControls({ design, onChange }: { design: Design; onChange: (d: Design) => void }) {
-  const keys = Object.keys(FONT_LABEL) as Design["fontHeading"][];
+  const keys = (Object.keys(FONT_LABEL) as Design["fontHeading"][]).filter((k) => k !== "instrument");
   return (
     <div className="grid grid-cols-2 gap-3">
       <Field label="Headings">
@@ -100,7 +100,7 @@ export function FontControls({ design, onChange }: { design: Design; onChange: (
       </Field>
       <Field label="Body text">
         <Select value={design.fontBody} onChange={(e) => onChange({ ...design, fontBody: e.target.value as Design["fontBody"] })}>
-          {keys.filter((k) => k !== "instrument").map((k) => <option key={k} value={k}>{FONT_LABEL[k]}</option>)}
+          {keys.map((k) => <option key={k} value={k}>{FONT_LABEL[k]}</option>)}
         </Select>
       </Field>
     </div>

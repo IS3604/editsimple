@@ -35,7 +35,7 @@ export const PUT = handle(async (req: Request, { params }: Ctx) => {
   const { id } = await params;
   const { sb, user } = await requireUser();
   await getProject(sb, id);
-  const { slides } = z.object({ slides: z.array(SlideIn).min(3, "Keep at least 3 slides").max(10) }).parse(await req.json());
+  const { slides } = z.object({ slides: z.array(SlideIn).min(1, "Keep at least 1 slide").max(10) }).parse(await req.json());
 
   const { data: existing } = await sb.from("slides").select("id").eq("project_id", id);
   const keep = new Set(slides.map((s) => s.id).filter(Boolean));

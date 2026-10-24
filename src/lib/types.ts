@@ -24,18 +24,24 @@ export const DesignSchema = z.object({
   handle: z.string().max(60).optional(),
   name: z.string().max(60).optional(), // e.g. "Dr. Ananya Rao" / "Adv. Karan Mehta"
   imageMode: z.enum(["per-slide", "cover-only", "none"]).default("cover-only"),
+  /** Imported branded background (storage path) drawn under every slide */
+  bgPath: z.string().max(400).nullable().optional(),
+  /** Text-safe padding (px at 1080 wide) to keep copy inside an imported frame */
+  safeInset: z.number().min(0).max(200).optional(),
 });
 export type Design = z.infer<typeof DesignSchema>;
 
 export const BriefInputSchema = z.object({
   niche: z.enum(["medical", "legal"]),
+  market: z.enum(["US", "UK", "CA", "AU", "AE", "SG", "IN", "GLOBAL"]).default("US"),
+  clientId: z.string().uuid().nullable().optional(),
   specialty: z.string().trim().max(80).default(""),
   topic: z.string().trim().min(3).max(200),
   hook: z.string().trim().max(140).optional().default(""),
   industry: z.string().trim().max(120).optional().default(""),
   audience: z.string().trim().max(200).optional().default(""),
   platform: z.enum(PLATFORMS),
-  slideCount: z.union([z.literal(6), z.literal(7)]),
+  slideCount: z.coerce.number().int().min(1).max(7),
   objective: z.enum(OBJECTIVES),
   tone: z.string().trim().max(80).default("warm, clear and expert"),
   language: z.string().trim().max(40).default("English"),

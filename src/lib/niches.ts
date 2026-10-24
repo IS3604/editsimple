@@ -1,4 +1,6 @@
-/** Doctor & lawyer niches — the only audiences EditSimple targets. Client-safe. */
+/** Doctor & lawyer niches — the client types EditSimple's content team serves. Client-safe. */
+import { MARKETS, type MarketCode } from "@/lib/markets";
+
 export type Niche = "medical" | "legal";
 
 export const NICHES: Record<
@@ -6,6 +8,7 @@ export const NICHES: Record<
   {
     label: string;
     who: string;
+    clientNoun: string;
     color: string;
     specialties: string[];
     audiences: string[];
@@ -19,61 +22,78 @@ export const NICHES: Record<
   medical: {
     label: "Doctors",
     who: "doctor",
+    clientNoun: "practice",
     color: "#0F7C72",
     specialties: [
-      "General physician", "Cardiology", "Dermatology", "Gynaecology & obstetrics", "Paediatrics", "Orthopaedics",
-      "Endocrinology & diabetes", "Psychiatry", "Gastroenterology", "Neurology", "ENT", "Dentistry", "Ophthalmology", "Nutrition & dietetics", "Physiotherapy",
+      "General practice / family medicine", "Cardiology", "Dermatology", "Aesthetic medicine", "Obstetrics & gynaecology", "Fertility / IVF", "Paediatrics",
+      "Orthopaedics & sports medicine", "Endocrinology & diabetes", "Psychiatry & mental health", "Gastroenterology", "Neurology", "Plastic surgery",
+      "Dentistry & orthodontics", "Ophthalmology", "Nutrition & weight management", "Physiotherapy", "Oncology",
     ],
-    audiences: ["Patients in their 30s–50s", "New parents", "Working professionals", "Senior citizens & caregivers", "Young women", "Fitness-conscious adults"],
+    audiences: ["Adults 30–55 managing their health", "New and expecting parents", "Busy professionals", "Older adults and caregivers", "Women's health seekers", "Active and fitness-minded adults"],
     newsQueries: [
-      "health india",
-      "disease OR outbreak OR virus india",
-      "AIIMS OR ICMR OR \"health ministry\"",
-      "\"new study\" health OR medical",
-      "doctors patients hospital india",
+      "\"new study\" health",
+      "FDA approval OR CDC OR NHS OR WHO health",
+      "disease outbreak OR virus cases",
+      "doctors warn",
+      "new treatment OR breakthrough medicine",
     ],
     youtubeQuery: "doctor explains",
     formats: [
       "Myth vs fact (busting a common health belief)",
       "Warning signs checklist (when to see a doctor)",
-      "What actually happens during a procedure/test",
+      "What actually happens during a procedure or test",
       "Mistakes patients make with a condition or medicine",
-      "Seasonal/news-linked explainer (what this outbreak/study means for you)",
+      "News explainer (what this study or outbreak means for you)",
       "Do vs don't for a common situation",
+      "Questions to ask your doctor about…",
     ],
     compliance:
-      "Educational only. No diagnosis or individual treatment advice, no drug dosages, no cure or outcome guarantees, no superiority claims, no patient testimonials, no fear-mongering. Encourage consulting a qualified doctor for symptoms. Keep self-promotion modest (NMC professional-conduct norms).",
-    disclaimer: "For awareness only. Not a substitute for medical advice.",
+      "Educational only. No diagnosis or individual treatment advice, no dosages, no cure or outcome guarantees, no superiority claims, no patient testimonials or identifiable patient details, no fear-mongering. Encourage seeing a qualified clinician for symptoms.",
+    disclaimer: "For general education only. Not medical advice.",
   },
   legal: {
     label: "Lawyers",
     who: "lawyer",
+    clientNoun: "firm",
     color: "#8C2F3C",
     specialties: [
-      "Family & divorce", "Property & real estate", "Criminal law", "Consumer protection", "Corporate & startup", "Employment & labour",
-      "Cyber law & online fraud", "Tax", "Intellectual property", "Civil litigation", "Banking & loan recovery",
+      "Personal injury", "Family & divorce", "Immigration", "Employment", "Estate planning & probate", "Real estate & landlord–tenant",
+      "Criminal defence", "Business & corporate", "Intellectual property", "Tax", "Bankruptcy & debt", "Consumer protection", "Medical malpractice",
     ],
-    audiences: ["Salaried professionals", "Startup founders", "Home buyers & tenants", "Couples & families", "Small business owners", "Students & young adults"],
+    audiences: ["Employees and job seekers", "Small business owners and founders", "Tenants and homeowners", "Couples and families", "Immigrants and visa holders", "People planning their estate"],
     newsQueries: [
-      "\"Supreme Court\" ruling",
-      "\"High Court\" judgment",
-      "new law OR bill OR amendment india",
-      "consumer court OR \"consumer commission\" order",
-      "cyber fraud OR scam law india",
+      "court ruling",
+      "\"Supreme Court\" decision",
+      "new law OR legislation takes effect",
+      "lawsuit settlement consumers",
+      "employment law OR tenant rights OR immigration rule",
     ],
-    youtubeQuery: "lawyer explains india",
+    youtubeQuery: "lawyer explains",
     formats: [
       "Your rights explained (in a common situation)",
-      "What to do if… (step-by-step)",
+      "What to do if… (step by step)",
       "Myth vs law",
-      "Landmark/recent judgment explained simply",
-      "Mistakes to avoid (in contracts, property, FIRs, etc.)",
+      "Recent ruling or new law explained simply",
+      "Mistakes to avoid (contracts, leases, wills, claims)",
       "Do vs don't for a legal situation",
+      "Questions to ask before hiring a lawyer",
     ],
     compliance:
-      "Educational legal awareness only. Advocates in India may not advertise or solicit (Bar Council of India Rule 36): no 'hire me/contact for case' CTAs, no claims of results or being the best, no fee offers. No advice on a specific person's case. Cite laws/sections only when certain; otherwise describe the principle. Mention that facts vary and readers should consult an advocate.",
-    disclaimer: "Legal awareness only. Not legal advice — consult an advocate for your case.",
+      "Educational legal information only. No advice on a specific person's case, no promised outcomes, no 'best lawyer' or superiority claims, no fee offers, no pressure. Cite statutes only when certain and name the jurisdiction; otherwise explain the principle and note that laws vary.",
+    disclaimer: "General information only, not legal advice. Laws vary by location.",
   },
 };
 
 export const nicheOf = (v: string | null | undefined): Niche => (v === "legal" ? "legal" : "medical");
+
+/** Combined rules for a niche in a market — fed to every prompt. */
+export function rulesFor(niche: Niche, market: MarketCode) {
+  const m = MARKETS[market];
+  return {
+    context: niche === "legal" ? m.legalContext : m.medicalContext,
+    rules: `${NICHES[niche].compliance} ${niche === "legal" ? m.legalRules : m.medicalRules}`,
+    spelling: m.spelling,
+    currency: m.currency,
+    label: m.label,
+  };
+}

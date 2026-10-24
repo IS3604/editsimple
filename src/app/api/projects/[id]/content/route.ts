@@ -6,8 +6,10 @@ import { chatJSON } from "@/lib/ai/llm";
 import { ContentSchema, contentPrompt, editorPrompt, systemFor } from "@/lib/ai/prompts";
 import { readReference } from "@/lib/reference";
 import { nicheOf } from "@/lib/niches";
+import { marketOf } from "@/lib/markets";
 import { TEMPLATES } from "@/lib/themes";
 import type { SlideKind } from "@/lib/types";
+import { enforceStructure } from "@/lib/structure";
 
 export const maxDuration = 60;
 type Ctx = { params: Promise<{ id: string }> };
@@ -23,6 +25,10 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
   const { data: brief } = await sb.from("content_briefs").select("*").eq("project_id", id).single();
   if (!brief) throw new HttpError(400, "Project has no brief");
   const niche = nicheOf(brief.niche);
+  const market = marketOf(brief.market);
+  const client = brief.client_id
+    ? (await sb.from("brand_settings").select("name,display_name,notes").eq("id", brief.client_id).maybeSingle()).data
+    : null;
 
   await setStage(sb, id, project.stage, "generating");
   try {
@@ -31,9 +37,12 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     const template = TEMPLATES[project.design?.template as keyof typeof TEMPLATES] ?? TEMPLATES.studio;
 
     let content = await chatJSON({
-      system: systemFor(niche),
+      system: systemFor(niche, market),
       user: contentPrompt({
         niche,
+        market,
+        clientName: client?.display_name || client?.name || undefined,
+        clientNotes: client?.notes || undefined,
         specialty: brief.specialty ?? "",
         topic: brief.topic,
         hook: brief.hook ?? "",
@@ -56,8 +65,8 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     if (Date.now() - started < 30_000) {
       try {
         content = await chatJSON({
-          system: systemFor(niche),
-          user: editorPrompt(JSON.stringify(content), niche),
+          system: systemFor(niche, market),
+          user: editorPrompt(JSON.stringify(content), niche, market),
           schema: ContentSchema,
           temperature: 0.4,
           effort: "low",
@@ -68,9 +77,7 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     }
 
     const slides = content.slides.slice(0, project.slide_count);
-    // guarantee structure: first = hook, last = cta
-    if (slides[0]) slides[0].kind = "hook";
-    if (slides.length > 1) slides[slides.length - 1].kind = "cta";
+    enforceStructure(slides);
 
     await sb.from("content_briefs").update({ strategy: { ...content.strategy, reference: ref?.note ?? null } }).eq("project_id", id);
     await sb.from("slides").delete().eq("project_id", id);

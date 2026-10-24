@@ -7,13 +7,14 @@ import { nichePopularVideos, youtubeConfigured, type VideoStat } from "@/lib/res
 import { chatJSON } from "@/lib/ai/llm";
 import { TrendIdeasSchema, systemFor, trendIdeasPrompt } from "@/lib/ai/prompts";
 import type { SourceStatus } from "@/lib/types";
-import { env } from "@/lib/env";
+import { MARKETS, marketOf, type MarketCode } from "@/lib/markets";
 
 export const maxDuration = 60;
 
 type Idea = { topic: string; hook: string; format: string; why_now: string; headlines: { title: string; link: string; source: string }[] };
 export type TrendingPayload = {
   niche: Niche;
+  market: MarketCode;
   headlines: NewsItem[];
   ideas: Idea[];
   videos: VideoStat[] | null;
@@ -22,7 +23,7 @@ export type TrendingPayload = {
   fetched_at: string;
 };
 
-const cache = new Map<Niche, { at: number; data: TrendingPayload }>();
+const cache = new Map<string, { at: number; data: TrendingPayload }>();
 const TTL = 60 * 60 * 1000;
 
 /** Trending for doctors or lawyers: real headlines + real YouTube stats + AI post ideas built from them. */
@@ -30,8 +31,10 @@ export const GET = handle(async (req: Request) => {
   await requireUser();
   const url = new URL(req.url);
   const niche = nicheOf(url.searchParams.get("niche"));
+  const market = marketOf(url.searchParams.get("market"));
+  const key = `${niche}:${market}`;
   const fresh = url.searchParams.get("refresh") === "1";
-  const hit = cache.get(niche);
+  const hit = cache.get(key);
   if (!fresh && hit && Date.now() - hit.at < TTL) return NextResponse.json(hit.data);
 
   const n = NICHES[niche];
@@ -39,8 +42,8 @@ export const GET = handle(async (req: Request) => {
   const t = () => new Date().toISOString();
 
   const [newsRes, ytRes] = await Promise.allSettled([
-    nicheHeadlines(n.newsQueries, 30),
-    youtubeConfigured() ? nichePopularVideos(n.youtubeQuery, 7, 12) : Promise.resolve(null),
+    nicheHeadlines(n.newsQueries, 30, market),
+    youtubeConfigured() ? nichePopularVideos(n.youtubeQuery, 7, 12, MARKETS[market].yt) : Promise.resolve(null),
   ]);
 
   const headlines = newsRes.status === "fulfilled" ? newsRes.value : [];
@@ -57,8 +60,8 @@ export const GET = handle(async (req: Request) => {
   if (headlines.length) {
     try {
       const out = await chatJSON({
-        system: systemFor(niche),
-        user: trendIdeasPrompt(niche, headlines.slice(0, 25)),
+        system: systemFor(niche, market),
+        user: trendIdeasPrompt(niche, market, headlines.slice(0, 25)),
         schema: TrendIdeasSchema,
         temperature: 0.6,
       });
@@ -75,7 +78,7 @@ export const GET = handle(async (req: Request) => {
     }
   }
 
-  const data: TrendingPayload = { niche, headlines, ideas, videos, sources, region: env.region, fetched_at: t() };
-  if (headlines.length || videos?.length) cache.set(niche, { at: Date.now(), data });
+  const data: TrendingPayload = { niche, market, headlines, ideas, videos, sources, region: MARKETS[market].label, fetched_at: t() };
+  if (headlines.length || videos?.length) cache.set(key, { at: Date.now(), data });
   return NextResponse.json(data);
 });

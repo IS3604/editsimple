@@ -6,7 +6,8 @@ import { Button, Skeleton } from "@/components/ui";
 import { ProjectCard, type ProjectListItem } from "@/components/project-card";
 import { HeadlineList, IdeaCards, TrendingFooter, useTrending } from "@/components/trending-lists";
 import { api } from "@/lib/api-client";
-import { useNiche } from "@/lib/use-niche";
+import { useMarket, useNiche } from "@/lib/use-niche";
+import { MARKETS } from "@/lib/markets";
 
 type Config = { text: string | null; images: string | null; googleAds: boolean; youtube: boolean };
 
@@ -17,7 +18,8 @@ const greeting = () => {
 
 export default function Dashboard() {
   const [niche] = useNiche();
-  const { data, loading, reload } = useTrending(niche);
+  const [market] = useMarket();
+  const { data, loading, reload } = useTrending(niche, market);
   const [projects, setProjects] = useState<ProjectListItem[] | null>(null);
   const [cfg, setCfg] = useState<Config | null>(null);
 
@@ -33,11 +35,11 @@ export default function Dashboard() {
       <header className="mb-10 flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="text-[15px] text-muted-foreground">{greeting()}</p>
-          <h1 className="mt-1 max-w-2xl text-[44px] leading-[1.04] sm:text-[54px]">{niche === "legal" ? "What should people know about the law this week?" : "What should your patients learn this week?"}</h1>
+          <h1 className="mt-1 max-w-3xl text-[34px] leading-[1.08] sm:text-[44px]">{niche === "legal" ? "What are your law-firm clients posting this week?" : "What are your doctor clients posting this week?"}</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/create">
-            <Button size="lg" variant="accent"><PenLine className="h-4 w-4" />New carousel</Button>
+            <Button size="lg" variant="accent"><PenLine className="h-4 w-4" />New post</Button>
           </Link>
         </div>
       </header>
@@ -51,7 +53,7 @@ export default function Dashboard() {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section>
           <div className="mb-4 flex items-baseline justify-between gap-4">
-            <h2 className="text-lg">Ideas from this week&apos;s news</h2>
+            <h2 className="text-lg">Ideas from this week&apos;s news in {MARKETS[market].label}</h2>
             <Link href="/trending" className="text-[13px] text-muted-foreground hover:text-foreground">See all trending</Link>
           </div>
           <IdeaCards niche={niche} data={data} limit={4} />
@@ -64,7 +66,7 @@ export default function Dashboard() {
           <section>
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="text-[15px]">Continue</h2>
-              <Link href="/projects" className="text-[13px] text-muted-foreground hover:text-foreground">All projects</Link>
+              <Link href="/projects" className="text-[13px] text-muted-foreground hover:text-foreground">All posts</Link>
             </div>
             {projects === null ? (
               <div className="grid grid-cols-2 gap-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="aspect-[4/5]" />)}</div>
@@ -72,13 +74,13 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-3">{projects.slice(0, 4).map((p) => <ProjectCard key={p.id} p={p} compact />)}</div>
             ) : (
               <div className="rounded-2xl border border-dashed p-5 text-[13px] text-muted-foreground">
-                Your carousels will appear here. Pick an idea on the left or start from your own topic.
+                Posts your team creates appear here. Pick an idea on the left or start from a client.
               </div>
             )}
           </section>
           <section>
-            <h2 className="mb-1 text-[15px]">Headlines in your field</h2>
-            <p className="text-xs text-muted-foreground">Google News, last 7 days</p>
+            <h2 className="mb-1 text-[15px]">Headlines in the field</h2>
+            <p className="text-xs text-muted-foreground">Google News, {MARKETS[market].label}, last 7 days</p>
             <HeadlineList data={data} limit={6} />
           </section>
         </aside>
