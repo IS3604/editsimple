@@ -6,5 +6,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const sb = await supabaseServer();
   const { data } = await sb.auth.getUser();
   if (!data.user) redirect("/login");
-  return <AppShell email={data.user.email ?? ""}>{children}</AppShell>;
+  // Website section is only listed for the EditSimple Website team (the database enforces access with RLS).
+  const admin = await sb.rpc("eds_is_admin").then((r) => r.data === true, () => false);
+  return (
+    <AppShell email={data.user.email ?? ""} websiteAdmin={admin}>
+      {children}
+    </AppShell>
+  );
 }

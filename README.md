@@ -144,3 +144,6 @@ Create → fill brief & design (or load a saved brand kit) → **Research keywor
 - 15 carousel fonts (Geist, Plus Jakarta Sans, Montserrat, Poppins, DM Sans, Outfit, Sora, Space Grotesk, Bricolage, Archivo, Bebas Neue, Fraunces, Playfair Display, DM Serif Display, Lora) with a visual picker. Exports embed only the fonts a slide uses.
 - Favicon / app icon (`src/app/icon.svg`, `favicon.ico`, `apple-icon.png`).
 - `OPENAI_IMAGE_QUALITY` (low | medium | high, default medium).
+
+## Website section (editsimple.in)
+See WEBSITE-SETUP.md for the database, edge functions, push keys, data move and website switch.

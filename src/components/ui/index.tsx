@@ -16,25 +16,26 @@ const btn: Record<BtnVariant, string> = {
   soft: "bg-[hsl(var(--accent-soft))] text-accent hover:brightness-[.97]",
 };
 
+type BtnSize = "xs" | "sm" | "md" | "lg" | "icon";
+/** Button classes, for links styled as buttons. */
+export function buttonClass(variant: BtnVariant = "default", size: BtnSize = "md", className?: string) {
+  return cn(
+    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-medium transition-[background,box-shadow,transform,filter] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
+    size === "xs" && "h-7 rounded-lg px-2.5 text-xs",
+    size === "sm" && "h-8 px-3 text-[13px]",
+    size === "md" && "h-10 px-4 text-sm",
+    size === "lg" && "h-12 px-5 text-[15px]",
+    size === "icon" && "h-9 w-9",
+    btn[variant],
+    className
+  );
+}
+
 export const Button = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; size?: "xs" | "sm" | "md" | "lg" | "icon"; loading?: boolean }
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant; size?: BtnSize; loading?: boolean }
 >(({ className, variant = "default", size = "md", loading, disabled, children, ...p }, ref) => (
-  <button
-    ref={ref}
-    disabled={disabled || loading}
-    className={cn(
-      "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-medium transition-[background,box-shadow,transform,filter] duration-150 active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
-      size === "xs" && "h-7 rounded-lg px-2.5 text-xs",
-      size === "sm" && "h-8 px-3 text-[13px]",
-      size === "md" && "h-10 px-4 text-sm",
-      size === "lg" && "h-12 px-5 text-[15px]",
-      size === "icon" && "h-9 w-9",
-      btn[variant],
-      className
-    )}
-    {...p}
-  >
+  <button ref={ref} disabled={disabled || loading} className={buttonClass(variant, size, className)} {...p}>
     {loading && <Loader2 className="h-4 w-4 animate-spin" />}
     {children}
   </button>
@@ -89,7 +90,8 @@ export function CardContent({ className, ...p }: React.HTMLAttributes<HTMLDivEle
   return <div className={cn("p-5 pt-0", className)} {...p} />;
 }
 
-export function Badge({ className, tone = "default", ...p }: React.HTMLAttributes<HTMLSpanElement> & { tone?: "default" | "real" | "ai" | "warn" | "muted" | "good" | "bad" | "accent" }) {
+export type BadgeTone = "default" | "real" | "ai" | "warn" | "muted" | "good" | "bad" | "accent" | "info";
+export function Badge({ className, tone = "default", dot, children, ...p }: React.HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone; dot?: boolean }) {
   const tones = {
     default: "bg-secondary text-secondary-foreground",
     real: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
@@ -99,8 +101,14 @@ export function Badge({ className, tone = "default", ...p }: React.HTMLAttribute
     good: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
     bad: "bg-rose-50 text-rose-800 ring-1 ring-rose-200",
     accent: "bg-[hsl(var(--accent-soft))] text-accent",
+    info: "bg-sky-50 text-sky-800 ring-1 ring-sky-200",
   };
-  return <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", tones[tone], className)} {...p} />;
+  return (
+    <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium", tones[tone], className)} {...p}>
+      {dot && <i aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-80" />}
+      {children}
+    </span>
+  );
 }
 
 /** Marks AI-produced content, consistently, everywhere. */

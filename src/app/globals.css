@@ -58,6 +58,16 @@
   }
   .phone-screen { border-radius: 34px; overflow: hidden; background: #fff; }
   .ai-tag { @apply inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-800 ring-1 ring-violet-200; }
+  .input { @apply flex h-10 w-full rounded-[10px] border border-input bg-card px-3 text-sm shadow-[0_1px_2px_rgb(15_18_30/.04)] transition-colors placeholder:text-muted-foreground/80 hover:border-foreground/25 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[hsl(var(--accent)/.12)] disabled:cursor-not-allowed; }
+  textarea.input { @apply h-auto py-2.5 leading-relaxed; }
+  .label { @apply mb-2 block text-[13px] font-medium leading-none text-foreground/90; }
+  .eyebrow { @apply text-[11px] font-semibold uppercase tracking-[.08em] text-muted-foreground; }
+  .num { font-variant-numeric: tabular-nums; }
+  .data-table { @apply w-full text-left text-sm; }
+  .data-table th { @apply border-b px-4 py-2.5 text-xs font-medium text-muted-foreground; }
+  .data-table td { @apply border-b px-4 py-3 align-middle; }
+  .data-table tbody tr { @apply transition-colors hover:bg-secondary/50; }
+  .data-table tbody tr:last-child td { @apply border-b-0; }
   .real-tag { @apply inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-200; }
 }
 

@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { FolderOpen, Globe2, Home, LogOut, Menu, Newspaper, Plus, Search, Stethoscope, Scale, Users, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FolderOpen, Globe, Globe2, Home, LogOut, Menu, Newspaper, Plus, Search, Stethoscope, Scale, Users, X } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { ToastProvider } from "@/components/feedback";
+import { PushPrompt } from "@/components/push";
 import { useMarket, useNiche } from "@/lib/use-niche";
 import { MARKETS, MARKET_CODES, type MarketCode } from "@/lib/markets";
 import { cn } from "@/lib/utils";
@@ -73,12 +75,19 @@ export function NicheSwitch({ className }: { className?: string }) {
   );
 }
 
-export function AppShell({ email, children }: { email: string; children: React.ReactNode }) {
+/** Shown only to people on the EditSimple Website team (eds_is_admin). */
+const WEBSITE = { href: "/website", label: "Website", icon: Globe };
+
+export function AppShell({ email, websiteAdmin = false, children }: { email: string; websiteAdmin?: boolean; children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [niche] = useNiche();
   const editor = path.startsWith("/projects/");
+  // panels and dialogs render outside the shell (portals), so the niche accent lives on <html> too
+  useEffect(() => {
+    document.documentElement.dataset.niche = niche;
+  }, [niche]);
 
   async function signOut() {
     await supabaseBrowser().auth.signOut();
@@ -87,6 +96,7 @@ export function AppShell({ email, children }: { email: string; children: React.R
   }
 
   return (
+    <ToastProvider>
     <div data-niche={niche} className="min-h-screen lg:grid lg:grid-cols-[236px_1fr]">
       <aside
         className={cn(
@@ -117,7 +127,7 @@ export function AppShell({ email, children }: { email: string; children: React.R
         </Link>
 
         <nav className="mt-5 flex flex-1 flex-col gap-0.5">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {(websiteAdmin ? [...NAV, WEBSITE] : NAV).map(({ href, label, icon: Icon }) => {
             const active = path === href || (href !== "/dashboard" && path.startsWith(href));
             return (
               <Link
@@ -155,11 +165,14 @@ export function AppShell({ email, children }: { email: string; children: React.R
           </button>
           <Wordmark />
         </header>
-        <main key={path} className={cn("mx-auto animate-fade-in px-4 py-6 lg:px-10 lg:py-9", editor ? "max-w-[1480px]" : "max-w-[1200px]")}>
+        {/* one key for the whole Website section, so its data loads once and tab switches are instant */}
+        <main key={path.startsWith("/website") ? "/website" : path} className={cn("mx-auto animate-fade-in px-4 py-6 lg:px-10 lg:py-9", editor ? "max-w-[1480px]" : "max-w-[1200px]")}>
           {children}
         </main>
       </div>
     </div>
+    {websiteAdmin && <PushPrompt />}
+    </ToastProvider>
   );
 }
 
