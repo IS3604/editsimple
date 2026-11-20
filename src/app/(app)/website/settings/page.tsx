@@ -1,8 +1,8 @@
 "use client";
 import { cn as clsx } from '@/lib/utils';
-import { Construction, Loader2, PlugZap } from 'lucide-react';
+import { Loader2, PlugZap } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useConfirm, useToast } from '@/components/feedback';
+import { useToast } from '@/components/feedback';
 import { PushSettings } from '@/components/push';
 import { buttonClass, Card, Skeleton } from '@/components/ui';
 import { DAYS, EMAIL_RE, hourLabel, type EdsSettings } from '@/lib/eds';
@@ -34,23 +34,7 @@ export default function SettingsView() {
   const [f, setF] = useState<Form>(base);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [ask, confirm] = useConfirm();
-  const [switching, setSwitching] = useState(false);
-  const maintenance = S.maintenance_mode === 'true';
 
-  // Maintenance mode saves on its own (with a confirm), separate from the form below.
-  const setMaintenance = async (on: boolean) => {
-    const ok = await confirm(on
-      ? { title: 'Put the website in maintenance mode?', text: 'Visitors to editsimple.in will see the maintenance page instead of the site until you turn this off.', label: 'Turn on maintenance', danger: true }
-      : { title: 'Bring the website back online?', text: 'Visitors will see the normal site again within a minute.', label: 'Go live' });
-    if (!ok) return;
-    setSwitching(true);
-    const r = await sb.rpc('eds_set_settings', { data: { maintenance_mode: on ? 'true' : 'false' } });
-    setSwitching(false);
-    if (r.error) { toast(false, r.error.message); return; }
-    toast(true, on ? 'Maintenance mode is on. The website shows the maintenance page.' : 'The website is live again.');
-    await loadSettings();
-  };
   useEffect(() => setF(base), [base]);
   const dirty = useMemo(() => Object.keys(base).some((k) => (f[k] ?? '') !== base[k]), [f, base]);
   const set = (k: string) => (v: string) => setF((x) => ({ ...x, [k]: v }));
@@ -118,21 +102,6 @@ export default function SettingsView() {
       </div>
 
       <div className="space-y-5">
-        <Section title="Website status" sub="Maintenance mode shows visitors a “back soon” page. Forms and the blog stay saved.">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className={clsx('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', maintenance ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700')}>
-              <Construction className="h-5 w-5" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <b className="block text-sm font-semibold">{maintenance ? 'Maintenance mode is ON' : 'Website is live'}</b>
-              <span className="text-xs text-muted-foreground">{maintenance ? 'Visitors see the maintenance page right now.' : 'Visitors see the normal site.'}</span>
-            </div>
-            <button className={buttonClass(maintenance ? 'accent' : 'outline', 'sm')} disabled={switching} onClick={() => setMaintenance(!maintenance)}>
-              {switching && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{maintenance ? 'Go live' : 'Turn on maintenance'}
-            </button>
-          </div>
-        </Section>
-
         <Section title="Notifications" sub="Get a browser notification the moment a website lead comes in.">
           <PushSettings />
         </Section>
@@ -194,7 +163,6 @@ export default function SettingsView() {
           <button className={buttonClass('accent')} disabled={!dirty || saving} onClick={save}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{saving ? 'Saving…' : 'Save changes'}</button>
         </div>
       </div>
-      {ask}
     </div>
   );
 }

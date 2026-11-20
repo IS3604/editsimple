@@ -112,10 +112,11 @@ Deno.serve(async (req) => {
       if (!post.title || !post.body_html) return json({ error: "Post needs a title and content" }, 400);
       const publishedAt = post.published_at ?? new Date().toISOString();
       const date = new Date(new Date(publishedAt).getTime() + 5.5 * 3600 * 1000).toISOString().slice(0, 10); // India date
+      // Only what the website needs. Sources and internal fields (model, keyword source) stay in the dashboard.
+      const updated = new Date(new Date().getTime() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
       const file = {
-        title: post.title, slug: post.slug, date, description: post.description, keywords: post.keywords,
-        target_query: post.target_query, keyword_source: post.keyword_source, sources: post.sources,
-        body_html: post.body_html, model: post.model,
+        title: post.title, slug: post.slug, date, ...(post.status === "published" && updated > date ? { updated } : {}),
+        description: post.description, keywords: post.keywords, body_html: post.body_html,
       };
       await gh().put(path, JSON.stringify(file, null, 2) + "\n", `Blog: ${post.status === "published" ? "update" : "publish"} "${post.title}"`);
       await db.from("eds_posts").update({ status: "published", published_at: publishedAt, updated_at: new Date().toISOString() }).eq("id", id);
