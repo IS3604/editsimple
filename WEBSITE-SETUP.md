@@ -9,8 +9,8 @@ It only shows for emails on the Website team (`eds_is_admin`).
 3. Paste the whole file into SQL Editor → Run. (`supabase_url` is already set to this project.)
 
 ## 2. Edge functions (Verify JWT **OFF** for each)
-`supabase/functions/eds-site-status` is included. **Still missing:** `eds-send-lead`, `eds-generate-post`, `eds-post-action`
-— copy them from the old CAS project unchanged into `supabase/functions/<name>/index.ts`, then deploy all four
+All four are in `supabase/functions/`.
+Deploy each one
 (Supabase → Edge Functions → Deploy new function → paste code → turn off "Verify JWT").
 
 ## 3. Vercel environment variables (then Redeploy)
