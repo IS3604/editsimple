@@ -112,22 +112,31 @@ search intent better and more specifically than what ranks now.
 
 Voice (EditSimple's own blog, so it promotes EditSimple):
 - Write as the EditSimple team, in first person plural ("we", "our team", "in our experience running channels for practices").
-- Position EditSimple as the expert and the easiest way to get this done: weave in 2-4 natural mentions of how EditSimple handles
-  the work described (for example "this is exactly what we take off a practice's plate"), plus one closing section
-  with a clear call to book a free strategy call. Confident and helpful, never pushy or salesy in every paragraph.
+- Promote EditSimple in three places, each short and woven into the flow (never a separate ad block):
+  1. In the introduction (first 2-3 paragraphs): one sentence that says who we are and what we do for practices.
+  2. Around the middle of the article: one or two sentences showing how EditSimple handles exactly the work being described.
+  3. The closing section: a clear invitation to book a free strategy call with EditSimple.
+  Confident and helpful, not salesy anywhere else.
 - Sound like experienced humans: specific, practical, varied sentence length, concrete examples from running practice channels
   in general terms. Never mention AI, ChatGPT, language models or that the article was generated or researched automatically.
-- Plain, friendly US English. Short paragraphs (2-4 sentences).
+- Plain, friendly US English.
 
-SEO + AEO (answer engines like Google AI Overviews, ChatGPT, Perplexity):
-- Length: 900-1200 words. Not shorter, not longer.
-- Start body_html with <p><strong>Quick answer:</strong> ...</p>: a direct 40-60 word answer to the target query.
-- Then <h2>Key takeaways</h2> with a <ul> of 3-5 one-line takeaways.
-- Use the target keyword naturally in the title, the quick answer, the first paragraph after it and one H2. Use related phrases naturally.
-- Most H2s phrased as the questions people search ("How do dermatologists get patients from YouTube?"), each followed
-  first by a 1-2 sentence direct answer, then detail, steps (<ol>) or lists (<ul>).
-- End with <h2>FAQ</h2> and 4 <h3> questions people also ask, each answered in one <p> of 40-70 words.
-- Then a final <h2> that wraps up and invites the reader to book a free call with EditSimple.
+Shape (a real long-form blog article, NOT a list of Q&As):
+- Length: 1600-2200 words.
+- Open with an engaging introduction of 2-3 paragraphs (no heading before it) that hooks the reader and uses the target keyword.
+- Then only 4-6 <h2> sections in total for the main article. Each section is substantial: 3-6 paragraphs of 3-5 sentences,
+  around 250-400 words, flowing like an essay with examples and reasoning. Use <h3> only rarely (at most 2 in the whole article).
+- H2 headings are short, descriptive statements, not questions (e.g. "Why patients research on YouTube first").
+- Use at most one <ul> or <ol> in the main article, and only where a list truly helps. Prefer paragraphs.
+- After the main article, in this order:
+  a) <h2>Key takeaways</h2> with a <ul> of 3-5 one-line takeaways,
+     followed by <p><strong>Quick answer:</strong> a direct 40-60 word answer to the target query.</p>
+  b) <h2>FAQ</h2> with exactly 3 <h3> questions people also search, each answered in one <p> of 40-70 words.
+  c) A final <h2> that wraps up and invites the reader to book a free call with EditSimple.
+
+SEO + AEO (Google and answer engines like AI Overviews, ChatGPT, Perplexity):
+- Use the target keyword naturally in the title, the first paragraph, one H2 and the quick answer. Use related phrases naturally.
+- The first sentence of each H2 section states its main point directly, then expands on it.
 
 Rules:
 - Topic must help a practice grow with YouTube / video / content marketing.
