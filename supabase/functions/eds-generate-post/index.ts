@@ -205,6 +205,26 @@ function tryParse(text: string): Record<string, unknown> | null {
   return null;
 }
 
+// ---------- Quality check: the article must be real long-form HTML in our shape ----------
+const words = (html: string) => html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+function articleIssues(html: string): string[] {
+  const issues: string[] = [];
+  const w = words(html);
+  const h2 = (html.match(/<h2>/gi) ?? []).length;
+  const paras = (html.match(/<p>/gi) ?? []).length;
+  if (/\*\*|^#{1,6}\s|^\s*[-*]\s/m.test(html) || paras < 8) issues.push("body_html must be real HTML (<h2>, <p>, <ul>), not markdown or one long block of text");
+  if (w < 1400) issues.push(`the article is only about ${w} words; expand the main sections to reach 1600-2200 words`);
+  if (h2 > 10) issues.push(`there are ${h2} <h2> headings; use only 4-6 for the main article plus Key takeaways, FAQ and the closing section`);
+  if ((html.match(/EditSimple/g) ?? []).length < 3) issues.push("mention EditSimple in the introduction, once around the middle, and in the closing section");
+  if (!/<h2>\s*Key takeaways/i.test(html) || !/Quick answer/i.test(html) || !/<h2>\s*FAQ/i.test(html)) issues.push("end with Key takeaways (+ Quick answer paragraph), then FAQ with 3 questions, then the closing section");
+  return issues;
+}
+const EDITOR = `${SYSTEM}
+
+You are now the EditSimple blog EDITOR. You receive a draft article as JSON and a list of problems.
+Rewrite it into the final article that follows every rule above. Keep the facts and statistics from the draft (do not add new ones),
+keep the same topic, target_query and sources. Return the same JSON shape.`;
+
 async function openai(key: string, payload: Record<string, unknown>) {
   const res = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -318,6 +338,29 @@ async function writePost(s: Record<string, string>, topic: string, by: string) {
       if (!post) throw new Error("AI returned an article that couldn't be read. Try again.");
     }
     for (const k of ["title", "slug", "description", "body_html"]) if (!post[k]) throw new Error(`AI response missing ${k}`);
+
+    // Editor pass(es): fix format, length, structure and EditSimple mentions when the draft misses them.
+    for (let round = 0; round < 2; round++) {
+      const issues = articleIssues(String(post.body_html));
+      if (!issues.length) break;
+      log.push(`editing: ${issues.join("; ")}`);
+      try {
+        const ed = await openai(s.openai_api_key, {
+          model, instructions: EDITOR, max_output_tokens: 10000, text: { format: POST_SCHEMA },
+          input: `Problems to fix:\n- ${issues.join("\n- ")}\n\nDraft:\n${JSON.stringify(post)}`,
+        });
+        const edText = (ed.output ?? []).flatMap((i: { type: string; content?: { type: string; text?: string }[] }) =>
+          i.type === "message" ? (i.content ?? []).filter((c) => c.type === "output_text").map((c) => c.text ?? "") : []).join("");
+        const better = tryParse(edText);
+        if (better?.body_html && words(String(better.body_html)) >= words(String(post.body_html)) * 0.8) post = { ...post, ...better };
+      } catch (e) {
+        log.push(`editor pass failed: ${(e as Error).message}`);
+        break;
+      }
+    }
+    // Last safety net: turn any leftover markdown bold into HTML.
+    post.body_html = String(post.body_html).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    log.push(`final: ${words(String(post.body_html))} words`);
 
     const seen = new Set<string>();
     const sources = [...(Array.isArray(post.sources) ? post.sources : []), ...cited]
