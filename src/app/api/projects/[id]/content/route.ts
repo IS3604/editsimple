@@ -97,7 +97,7 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
           user_id: user.id,
           project_id: id,
           position: i,
-          style: {},
+          style: s.icon ? { icon: s.icon } : {},
         }))
       )
       .select("*");

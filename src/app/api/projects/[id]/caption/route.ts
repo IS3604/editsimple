@@ -39,7 +39,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
       objective: brief.objective ?? "education",
       tone: brief.tone ?? "",
       language: brief.language ?? "English",
-      slides: slides.map((x) => ({ heading: x.heading, body: [x.body, ...((x.items as { title: string; text: string }[]) ?? []).map((i) => `${i.title}: ${i.text}`)].filter(Boolean).join(" / ") })),
+      slides: slides.map((x) => ({ heading: String(x.heading).replace(/\*/g, ""), body: [x.body, ...((x.items as { title: string; text: string }[]) ?? []).map((i) => `${i.title}: ${i.text}`)].filter(Boolean).join(" / ") })),
       keywords,
       hashtagIdeas: hashtags,
     }),

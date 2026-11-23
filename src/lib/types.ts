@@ -64,6 +64,7 @@ export type SlideStyle = {
   headingScale?: number; // 0.6 – 1.4
   overlay?: number; // 0 – 0.9 scrim over a full-bleed image
   focusY?: number; // 0 – 100 image vertical focus
+  icon?: string; // SLIDE_ICONS key shown as the slide's visual badge
 };
 
 export type Slide = {

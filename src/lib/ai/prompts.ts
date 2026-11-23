@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { SLIDE_ICON_KEYS, type SlideIcon } from "@/lib/slide-icons";
 import { NICHES, rulesFor, type Niche } from "@/lib/niches";
 import type { MarketCode } from "@/lib/markets";
 import type { KeywordMetric } from "@/lib/types";
@@ -35,6 +36,7 @@ export const SlideCopySchema = z.object({
   body: z.string().max(300).default(""),
   items: z.array(ItemSchema).max(6).default([]),
   visual_prompt: z.string().max(500).default(""),
+  icon: z.enum(SLIDE_ICON_KEYS as [SlideIcon, ...SlideIcon[]]).optional().catch(undefined),
 });
 
 export const ContentSchema = z.object({
@@ -351,6 +353,8 @@ ${structureFor(p.slideCount, focus.subject)}
 ${KIND_GUIDE}
 
 kicker: ≤ 3 words that orient the reader (e.g. "Red flag", "Your right", "Step 2"); may be empty.
+heading emphasis: wrap the 1–3 most important words of each heading in *asterisks* (e.g. "Botox *relaxes muscles*, fillers *add volume*"). They are shown highlighted in the accent colour. Never more than one highlighted phrase per heading.
+icon: pick the one icon that best fits each slide from: ${SLIDE_ICON_KEYS.join(", ")}.
 visual_prompt: ONLY for the first slide (and optionally one statement slide); otherwise "". Write it like a photo brief for THIS post's subject, so it could not be reused for another post:
   - what is shown: the exact treatment, product, setting or moment the post is about (for a comparison, both sides visibly present, e.g. two treatment trays or a split scene), never a generic person posing;
   - who: a specific person that matches the audience (age range, look, what they're doing), or no person if objects tell the story better;
@@ -361,7 +365,7 @@ visual_prompt: ONLY for the first slide (and optionally one statement slide); ot
   Avoid: text, before/after splits, distressed faces, the cliché "woman touching her cheek in a mirror", stethoscope on desk, gavel and scales.
 Return exactly ${p.slideCount} slide(s).
 strategy.narrative = your slide plan, one short line per slide. strategy.visual_direction = one consistent look for all images in this post (palette, light, photographic style).
-JSON: {"strategy":{"angle","audience_insight","hook_options":[3 alternatives],"narrative":[...],"visual_direction"},"slides":[{"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt"}]}`;
+JSON: {"strategy":{"angle","audience_insight","hook_options":[3 alternatives],"narrative":[...],"visual_direction"},"slides":[{"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt","icon"}]}`;
 }
 
 /** Second pass: an editor sharpens the draft. */
@@ -418,7 +422,8 @@ ${p.instruction ? `Editor's instruction: ${p.instruction}` : "Make it sharper, m
 Keep kind "${p.kind}" unless the instruction asks otherwise.
 Plain words a 14-year-old understands; explain any technical term; the heading must state the slide's point on its own.
 ${KIND_GUIDE}
-JSON: {"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt"}`;
+Wrap the 1–3 key words of the heading in *asterisks*. icon: one of ${SLIDE_ICON_KEYS.join(", ")}.
+JSON: {"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt","icon"}`;
 }
 
 export function captionPrompt(p: {

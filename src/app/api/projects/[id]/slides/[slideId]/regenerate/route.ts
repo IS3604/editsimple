@@ -50,7 +50,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
 
   const { data, error } = await sb
     .from("slides")
-    .update({ kind: copy.kind, role: copy.role, kicker: copy.kicker || null, heading: copy.heading, body: copy.body, items: copy.items, visual_prompt: copy.visual_prompt || target.visual_prompt })
+    .update({ kind: copy.kind, role: copy.role, kicker: copy.kicker || null, heading: copy.heading, body: copy.body, items: copy.items, visual_prompt: copy.visual_prompt || target.visual_prompt, ...(copy.icon ? { style: { ...(target.style ?? {}), icon: copy.icon } } : {}) })
     .eq("id", slideId)
     .select("*")
     .single();

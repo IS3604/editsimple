@@ -26,6 +26,7 @@ const SlideIn = z.object({
       headingScale: z.number().min(0.5).max(1.6).optional(),
       overlay: z.number().min(0).max(0.95).optional(),
       focusY: z.number().min(0).max(100).optional(),
+      icon: z.string().max(20).optional(),
     })
     .default({}),
 });

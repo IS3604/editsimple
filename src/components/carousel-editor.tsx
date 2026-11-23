@@ -554,8 +554,8 @@ export function CarouselEditor({ projectId }: { projectId: string }) {
                 />
               ) : (
                 <div className="space-y-6">
-                  <ImportTemplateButton design={design} onApply={updateDesign} heading={slides[0]?.heading} className="w-full" />
-                  <TemplatePicker design={design} onChange={updateDesign} heading={slides[0]?.heading} niche={niche} columns={3} />
+                  <ImportTemplateButton design={design} onApply={updateDesign} heading={slides[0]?.heading?.replace(/\*/g, "")} className="w-full" />
+                  <TemplatePicker design={design} onChange={updateDesign} heading={slides[0]?.heading?.replace(/\*/g, "")} niche={niche} columns={3} />
                   <ColorControls design={design} onChange={updateDesign} />
                   <FontControls design={design} onChange={updateDesign} />
                   <IdentityControls design={design} onChange={updateDesign} niche={niche} />
@@ -688,7 +688,7 @@ function SlideInspector({
       <Field label="Label" hint="A few words above the heading, e.g. “Red flag” or “Your right”.">
         <Input value={slide.kicker ?? ""} maxLength={60} onChange={(e) => onChange({ kicker: e.target.value })} />
       </Field>
-      <Field label="Heading" aside={<span className="text-[11px] tabular-nums text-muted-foreground">{slide.heading.length}</span>}>
+      <Field label="Heading" hint="Wrap words in *stars* to highlight them in your accent colour." aside={<span className="text-[11px] tabular-nums text-muted-foreground">{slide.heading.length}</span>}>
         <Textarea rows={2} maxLength={160} value={slide.heading} onChange={(e) => onChange({ heading: e.target.value })} className="text-[15px] font-medium" />
       </Field>
       {!["myth_fact", "comparison"].includes(slide.kind) && (

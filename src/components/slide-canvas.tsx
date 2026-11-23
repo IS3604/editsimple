@@ -3,6 +3,23 @@ import { forwardRef, useLayoutEffect, useRef, useState } from "react";
 import type { Design, Slide, SlideItem } from "@/lib/types";
 import { FONTS, FONT_VARS, TEMPLATES, isDark } from "@/lib/themes";
 import { assetUrlClient } from "@/lib/asset-url";
+import { SLIDE_ICONS, defaultIcon, type SlideIcon } from "@/lib/slide-icons";
+
+/** "Botox *relaxes muscles*" → parts with the starred phrase marked for emphasis. */
+export function emphasisParts(text: string): { t: string; em: boolean }[] {
+  const parts: { t: string; em: boolean }[] = [];
+  const re = /\*([^*]+)\*/g;
+  let last = 0;
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    if (m.index > last) parts.push({ t: text.slice(last, m.index), em: false });
+    parts.push({ t: m[1], em: true });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ t: text.slice(last), em: false });
+  return parts.map((p) => ({ ...p, t: p.t.replace(/\*/g, "") })).filter((p) => p.t);
+}
+/** Heading text without emphasis markers (titles, alt text, captions). */
+export const plainHeading = (t: string) => t.replace(/\*/g, "");
 
 export type SlideSize = "1080x1350" | "1080x1080";
 export const dims = (size: SlideSize) => {
@@ -155,9 +172,79 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         textAlign: kind === "highlight" ? "center" : "left",
       }}
     >
-      {slide.heading}
+      {emphasisParts(slide.heading).map((p, i) =>
+        p.em ? (
+          <span
+            key={i}
+            style={
+              highlightField
+                ? { textDecoration: "underline", textDecorationThickness: Math.max(4, headSize * 0.06), textUnderlineOffset: headSize * 0.12 }
+                : fullBleed
+                ? { color: accent === "#FFFFFF" ? "#FFFFFF" : accent, filter: "brightness(1.25)" }
+                : { color: accent, background: `linear-gradient(180deg, transparent 62%, ${alpha(accent, 0.18)} 62%)`, padding: "0 0.04em" }
+            }
+          >
+            {p.t}
+          </span>
+        ) : (
+          <span key={i}>{p.t}</span>
+        )
+      )}
     </div>
   );
+
+  // ---------- slide icon ----------
+  const iconKey = ((slide.style?.icon as SlideIcon | undefined) && SLIDE_ICONS[slide.style!.icon as SlideIcon] ? slide.style!.icon : defaultIcon(kind, `${slide.heading} ${slide.kicker ?? ""}`)) as SlideIcon;
+  const showIconTile = !fullBleed && !split && (kind === "statement" || kind === "highlight" || (kind === "hook" && !hasImg));
+  const iconTile = showIconTile ? (
+    <div
+      style={{
+        width: 104 * fit,
+        height: 104 * fit,
+        borderRadius: Math.min(32, look.radius + 8) * fit,
+        display: "grid",
+        placeItems: "center",
+        alignSelf: kind === "highlight" ? "center" : "flex-start",
+        background: highlightField ? alpha(onAccent, 0.16) : alpha(accent, 0.12),
+        border: `2px solid ${highlightField ? alpha(onAccent, 0.3) : alpha(accent, 0.25)}`,
+        flexShrink: 0,
+      }}
+    >
+      <Icon d={SLIDE_ICONS[iconKey]} size={54 * fit} color={highlightField ? onAccent : accent} stroke={2.4} />
+    </div>
+  ) : null;
+  // small icon before the kicker on list-style slides
+  const kickerIcon = !showIconTile && !fullBleed && kind !== "cta" && kind !== "hook";
+  const topRow = kickerIcon ? (
+    <div style={{ display: "flex", alignItems: "center", gap: 18 * fit }}>
+      <div style={{ width: 62 * fit, height: 62 * fit, borderRadius: 18 * fit, display: "grid", placeItems: "center", background: alpha(accent, 0.12), flexShrink: 0 }}>
+        <Icon d={SLIDE_ICONS[iconKey]} size={34 * fit} color={accent} stroke={2.4} />
+      </div>
+      {kicker}
+    </div>
+  ) : (
+    kicker
+  );
+  // statement body as a callout card, so the slide has a clear visual block
+  const calloutBody =
+    kind === "statement" && slide.body && !fullBleed ? (
+      <div
+        style={{
+          fontFamily: bodyFont,
+          fontSize: bodySize,
+          lineHeight: 1.45,
+          color: ink,
+          whiteSpace: "pre-line",
+          maxWidth: 880,
+          padding: `${28 * fit}px ${34 * fit}px`,
+          borderLeft: `${8 * fit}px solid ${accent}`,
+          background: look.cards === "glass" ? "rgba(255,255,255,.6)" : alpha(accent, 0.07),
+          borderRadius: `0 ${Math.max(8, look.radius) * fit}px ${Math.max(8, look.radius) * fit}px 0`,
+        }}
+      >
+        {slide.body}
+      </div>
+    ) : null;
 
   const body = slide.body ? (
     <div
@@ -223,7 +310,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       case "list":
         return (
           <>
-            {kicker}
+            {topRow}
             {heading}
             {body}
             <div style={{ display: "flex", flexDirection: "column", gap: 20 * fit, marginTop: 12 * fit }}>
@@ -239,7 +326,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       case "steps":
         return (
           <>
-            {kicker}
+            {topRow}
             {heading}
             {body}
             <div style={{ display: "flex", flexDirection: "column", gap: 18 * fit, marginTop: 8 * fit }}>
@@ -255,7 +342,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       case "checklist":
         return (
           <>
-            {kicker}
+            {topRow}
             {heading}
             {body}
             <div style={{ display: "grid", gridTemplateColumns: items.length > 4 ? "1fr 1fr" : "1fr", gap: 16 * fit, marginTop: 8 * fit }}>
@@ -272,7 +359,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         const [myth, fact] = [items[0] ?? { title: "Myth", text: "" }, items[1] ?? { title: "Fact", text: "" }];
         return (
           <>
-            {kicker}
+            {topRow}
             {heading}
             <div style={{ display: "flex", flexDirection: "column", gap: 20 * fit, marginTop: 8 * fit }}>
               <div style={{ ...cardBase(), display: "flex", gap: 22 * fit, alignItems: "flex-start", opacity: 0.9 }}>
@@ -292,7 +379,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         const neg = (t: string) => /don'?t|avoid|wrong|myth|before|never|not/i.test(t);
         return (
           <>
-            {kicker}
+            {topRow}
             {heading}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 * fit, marginTop: 8 * fit, alignItems: "stretch" }}>
               {cols.map((c, i) => {
@@ -352,20 +439,81 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         // hook, statement, highlight
         return (
           <>
+            {iconTile}
             {kicker}
             {heading}
-            {body}
+            {calloutBody ?? body}
           </>
         );
     }
   })();
 
   // ---------- background treatments ----------
+  const num = String(index + 1).padStart(2, "0");
+  const dots = (style: React.CSSProperties) => (
+    <div style={{ position: "absolute", backgroundImage: `radial-gradient(${alpha(ink, 0.2)} 2.4px, transparent 3px)`, backgroundSize: "30px 30px", ...style }} />
+  );
+  /** Inner slides get a quiet graphic layer (big slide number + a template motif) so they never look like a blank page. */
+  const innerDeco = () => {
+    const bigNumber = (
+      <div
+        style={{
+          position: "absolute",
+          right: P - 24,
+          bottom: 96,
+          fontFamily: headFont,
+          fontWeight: Math.max(600, headWeight),
+          fontSize: size === "1080x1080" ? 300 : 380,
+          lineHeight: 0.8,
+          letterSpacing: "-0.06em",
+          color: alpha(accent, 0.09),
+          userSelect: "none",
+        }}
+      >
+        {num}
+      </div>
+    );
+    const motif = (() => {
+      switch (design.template) {
+        case "clinic":
+          return <div style={{ position: "absolute", width: 620, height: 620, right: -300, top: -260, borderRadius: "46% 54% 42% 58%", background: alpha(accent, 0.1) }} />;
+        case "counsel":
+        case "editorial":
+          return (
+            <>
+              <div style={{ position: "absolute", left: P, right: P, top: 126, height: 2, background: alpha(accent, 0.55) }} />
+              <div style={{ position: "absolute", right: 48, bottom: 48, width: 90, height: 90, borderRight: `3px solid ${alpha(accent, 0.6)}`, borderBottom: `3px solid ${alpha(accent, 0.6)}` }} />
+            </>
+          );
+        case "bold":
+          return <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 22, background: accent }} />;
+        case "mesh":
+        case "noir":
+          return null;
+        default:
+          return <div style={{ position: "absolute", width: 460, height: 460, right: -210, top: -210, borderRadius: "50%", border: `3px solid ${alpha(accent, 0.22)}`, boxShadow: `inset 0 0 0 40px ${alpha(accent, 0.05)}` }} />;
+      }
+    })();
+    return (
+      <>
+        {motif}
+        {dots({ left: P - 10, bottom: 130, width: 210, height: 120, opacity: 0.55, maskImage: "linear-gradient(90deg,#000,transparent)", WebkitMaskImage: "linear-gradient(90deg,#000,transparent)" })}
+        {bigNumber}
+      </>
+    );
+  };
+
   const backdrop = (() => {
     if (brandBg) return null; // imported branded background replaces template decoration
-    if (highlightField) return null;
-    if (look.bg === "mesh")
+    if (highlightField)
       return (
+        <>
+          <div style={{ position: "absolute", width: 900, height: 900, left: -320, bottom: -420, borderRadius: "50%", border: `3px solid ${alpha(onAccent, 0.18)}` }} />
+          <div style={{ position: "absolute", width: 520, height: 520, right: -180, top: -160, borderRadius: "50%", background: alpha(onAccent, 0.08) }} />
+        </>
+      );
+    const meshBg =
+      look.bg === "mesh" ? (
         <div
           style={{
             position: "absolute",
@@ -373,10 +521,11 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
             background: `radial-gradient(60% 50% at 85% 10%, ${alpha(accent, 0.38)} 0%, transparent 70%), radial-gradient(55% 45% at 0% 100%, ${alpha("#FF8FB1", 0.35)} 0%, transparent 70%), radial-gradient(40% 40% at 30% 30%, ${alpha("#7FE3FF", 0.3)} 0%, transparent 70%)`,
           }}
         />
-      );
-    if (look.bg === "glow")
-      return <div style={{ position: "absolute", width: 900, height: 900, right: -380, top: -420, borderRadius: "50%", background: `radial-gradient(circle, ${alpha(accent, 0.38)} 0%, transparent 65%)` }} />;
-    if (kind === "hook" && !hasImg) {
+      ) : look.bg === "glow" ? (
+        <div style={{ position: "absolute", width: 900, height: 900, right: -380, top: -420, borderRadius: "50%", background: `radial-gradient(circle, ${alpha(accent, 0.38)} 0%, transparent 65%)` }} />
+      ) : null;
+    if (kind === "hook") {
+      if (hasImg || meshBg) return meshBg;
       // typographic cover detail, specific to each template
       if (design.template === "counsel" || design.template === "editorial")
         return <div style={{ position: "absolute", left: P, right: P, top: h * 0.28, height: 3, background: accent }} />;
@@ -385,7 +534,13 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
       if (design.template === "bold") return <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 24, background: accent }} />;
       return <div style={{ position: "absolute", width: 560, height: 560, right: -200, bottom: -200, borderRadius: "50%", background: accent }} />;
     }
-    return null;
+    if (fullBleed) return meshBg;
+    return (
+      <>
+        {meshBg}
+        {innerDeco()}
+      </>
+    );
   })();
 
   const focus = `50% ${slide.style?.focusY ?? 45}%`;

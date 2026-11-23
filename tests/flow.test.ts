@@ -78,3 +78,22 @@ describe("slide plans follow the kind of topic", () => {
     expect(slidePlan("What is microneedling", 4)[1]).toMatch(/WHAT IT IS/);
   });
 });
+
+describe("slide design", () => {
+  it("highlights *starred* words in headings and strips the stars elsewhere", async () => {
+    const { emphasisParts, plainHeading } = await import("@/components/slide-canvas");
+    expect(emphasisParts("Botox *relaxes muscles*, fillers *add volume*")).toEqual([
+      { t: "Botox ", em: false }, { t: "relaxes muscles", em: true }, { t: ", fillers ", em: false }, { t: "add volume", em: true },
+    ]);
+    expect(emphasisParts("No stars here")).toEqual([{ t: "No stars here", em: false }]);
+    expect(emphasisParts("Broken *star")).toEqual([{ t: "Broken star", em: false }]);
+    expect(plainHeading("Save this for your *next consult*")).toBe("Save this for your next consult");
+  });
+
+  it("every slide gets a sensible icon even when the writer didn't pick one", async () => {
+    const { defaultIcon, SLIDE_ICONS } = await import("@/lib/slide-icons");
+    expect(defaultIcon("statement", "How long does Botox last")).toBe("clock");
+    expect(defaultIcon("myth_fact", "Will I look frozen")).toBe("question");
+    for (const k of ["list", "steps", "checklist", "highlight", "cta", "statement"]) expect(SLIDE_ICONS[defaultIcon(k)]).toBeTruthy();
+  });
+});

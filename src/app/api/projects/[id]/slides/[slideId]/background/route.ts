@@ -44,7 +44,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
       : aspect === "landscape"
       ? "Composition: wide landscape frame, subject centred horizontally and vertically, fully visible with comfortable margins; nothing important near the edges."
       : "Composition: tall frame, subject centred, fully visible with margin on all sides.";
-    const scene = body.prompt ?? slide.visual_prompt ?? `${slide.heading}${brief?.topic ? ` (post about: ${brief.topic})` : ""}`;
+    const scene = body.prompt ?? slide.visual_prompt ?? `${String(slide.heading).replace(/\*/g, "")}${brief?.topic ? ` (post about: ${brief.topic})` : ""}`;
     prompt = [
       `Scene: ${scene}.`,
       brief?.topic ? `The image must clearly relate to this post's subject: "${brief.topic}".` : "",
