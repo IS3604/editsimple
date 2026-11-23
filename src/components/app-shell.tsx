@@ -18,17 +18,11 @@ const NAV = [
   { href: "/clients", label: "Clients", icon: Users },
 ];
 
-/** EditSimple wordmark: a bracket-cut mark + tight Geist type. */
+/** EditSimple logo (orange EDIT / dark SIMPLE). `invert` uses the white-ink version for dark backgrounds. */
 export function Wordmark({ invert = false }: { invert?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
-        <rect width="22" height="22" rx="6" fill={invert ? "#fff" : "hsl(var(--foreground))"} />
-        <path d="M7 6.5h8M7 11h6M7 15.5h8" stroke={invert ? "#151823" : "#fff"} strokeWidth="2" strokeLinecap="round" />
-        <circle cx="16.5" cy="11" r="1.6" fill="hsl(var(--accent))" />
-      </svg>
-      <span className={cn("text-[17px] font-semibold tracking-[-0.03em]", invert ? "text-white" : "text-foreground")}>EditSimple</span>
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={invert ? "/logo-light.png" : "/logo.png"} alt="EditSimple" width={60} height={34} className="block h-[34px] w-auto max-w-none shrink-0 self-start select-none" draggable={false} />
   );
 }
 
