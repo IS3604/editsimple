@@ -51,7 +51,7 @@ export type TemplateSpec = {
   fontBody: Design["fontBody"];
   /** visual treatment flags read by SlideCanvas */
   look: {
-    bg: "flat" | "mesh" | "glow";
+    bg: "flat" | "mesh" | "glow" | "chalk";
     cards: "outline" | "filled" | "glass" | "rule";
     headingWeight: number;
     tracking: string;
@@ -112,6 +112,13 @@ export const TEMPLATES: Record<Design["template"], TemplateSpec> = {
     colors: { background: "#0E1016", text: "#EEF0F5", accent: "#7FB7FF", surface: "#171A23" },
     fontHeading: "geist", fontBody: "geist",
     look: { bg: "glow", cards: "outline", headingWeight: 650, tracking: "-0.04em", radius: 24 },
+  },
+  chalk: {
+    label: "Chalkboard",
+    description: "Textured charcoal, orange headings, hand-drawn doodles",
+    colors: { background: "#2A2928", text: "#FFFFFF", accent: "#F58A3D", surface: "#353331" },
+    fontHeading: "poppins", fontBody: "montserrat",
+    look: { bg: "chalk", cards: "rule", headingWeight: 700, tracking: "-0.01em", radius: 10 },
   },
 };
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const PLATFORMS = ["instagram", "linkedin", "both"] as const;
 export const OBJECTIVES = ["education", "engagement", "awareness", "leads"] as const;
-export const TEMPLATES = ["studio", "clinic", "counsel", "editorial", "mesh", "bold", "noir"] as const;
+export const TEMPLATES = ["studio", "clinic", "counsel", "editorial", "mesh", "bold", "noir", "chalk"] as const;
 export const LAYOUTS = ["top", "center", "bottom", "split"] as const;
 export const FONT_KEYS = [
   "geist", "jakarta", "montserrat", "poppins", "dmsans", "outfit", "sora", "spacegrotesk", "bricolage", "archivo", "bebas",

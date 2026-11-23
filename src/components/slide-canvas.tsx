@@ -99,10 +99,13 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   const scale = slide.style?.headingScale ?? 1;
 
   const hasImg = !!bgUrl;
+  const chalk = look.bg === "chalk";
+  // Chalkboard: a numbered tip ("Tip 2", "Step 3", "2.") gets a round number badge instead of a kicker
+  const tipNo = chalk ? (slide.kicker?.match(/(\d+)/)?.[1] ?? slide.heading.match(/^\s*(\d+)[.)]\s/)?.[1] ?? null) : null;
   const fullBleed = hasImg && (kind === "hook" || slide.layout === "center");
   const split = hasImg && !fullBleed && slide.layout === "split";
   const framed = hasImg && !fullBleed && !split;
-  const highlightField = kind === "highlight" && !hasImg;
+  const highlightField = kind === "highlight" && !hasImg && !chalk;
   const fieldBg = highlightField ? accent : bg;
   const fieldInk = highlightField ? onAccent : fullBleed ? "#FFFFFF" : ink;
   const fieldMuted = highlightField ? alpha(onAccent, 0.8) : fullBleed ? "rgba(255,255,255,.82)" : muted;
@@ -158,6 +161,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     </div>
   ) : null;
 
+  const centred = kind === "highlight" || (chalk && (kind === "statement" || kind === "cta"));
   const heading = (
     <div
       style={{
@@ -166,14 +170,25 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         lineHeight: headMeta.lineHeight ?? 0.98,
         fontWeight: headWeight,
         letterSpacing: headTracking,
-        color: fieldInk,
+        color: chalk && kind !== "hook" && !fullBleed ? accent : fieldInk,
         textWrap: "balance" as never,
         overflowWrap: "break-word",
-        textAlign: kind === "highlight" ? "center" : "left",
+        textAlign: centred ? "center" : "left",
       }}
     >
-      {emphasisParts(slide.heading).map((p, i) =>
-        p.em ? (
+      {emphasisParts(slide.heading.replace(/^\s*\d+[.)]\s+/, chalk && tipNo ? "" : "$&")).map((p, i, arr) =>
+        chalk && p.em ? (
+          <span
+            key={i}
+            style={
+              kind === "hook" && i === arr.length - 1 && !fullBleed
+                ? { background: accent, color: "#1E1C1B", padding: "0.02em 0.16em", boxDecorationBreak: "clone", WebkitBoxDecorationBreak: "clone" as never, display: "inline", lineHeight: 1.18 }
+                : { color: kind === "hook" ? accent : "#FFFFFF" }
+            }
+          >
+            {p.t}
+          </span>
+        ) : p.em ? (
           <span
             key={i}
             style={
@@ -195,7 +210,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
 
   // ---------- slide icon ----------
   const iconKey = ((slide.style?.icon as SlideIcon | undefined) && SLIDE_ICONS[slide.style!.icon as SlideIcon] ? slide.style!.icon : defaultIcon(kind, `${slide.heading} ${slide.kicker ?? ""}`)) as SlideIcon;
-  const showIconTile = !fullBleed && !split && (kind === "statement" || kind === "highlight" || (kind === "hook" && !hasImg));
+  const showIconTile = !chalk && !fullBleed && !split && (kind === "statement" || kind === "highlight" || (kind === "hook" && !hasImg));
   const iconTile = showIconTile ? (
     <div
       style={{
@@ -214,7 +229,37 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     </div>
   ) : null;
   // small icon before the kicker on list-style slides
-  const kickerIcon = !showIconTile && !fullBleed && kind !== "cta" && kind !== "hook";
+  const kickerIcon = !chalk && !showIconTile && !fullBleed && kind !== "cta" && kind !== "hook";
+  const dashedRule = (
+    <svg width={300 * fit} height={12} viewBox="0 0 300 12" style={{ alignSelf: centred ? "center" : "flex-start", flexShrink: 0 }}>
+      <path d="M2 6 L298 6" stroke="#FFFFFF" strokeWidth={5} strokeDasharray="22 16" strokeLinecap="round" />
+    </svg>
+  );
+  // badge + heading on one line, like a numbered tip
+  const chalkHeading =
+    chalk && tipNo ? (
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 18 * fit, justifyContent: centred ? "center" : "flex-start" }}>
+        <div
+          style={{
+            width: 92 * fit,
+            height: 92 * fit,
+            borderRadius: 999,
+            background: "#FFFFFF",
+            color: "#1E1C1B",
+            display: "grid",
+            placeItems: "center",
+            fontFamily: headFont,
+            fontWeight: 800,
+            fontSize: 46 * fit,
+            flexShrink: 0,
+            marginTop: headSize * 0.08,
+          }}
+        >
+          {tipNo}.
+        </div>
+        {heading}
+      </div>
+    ) : null;
   const topRow = kickerIcon ? (
     <div style={{ display: "flex", alignItems: "center", gap: 18 * fit }}>
       <div style={{ width: 62 * fit, height: 62 * fit, borderRadius: 18 * fit, display: "grid", placeItems: "center", background: alpha(accent, 0.12), flexShrink: 0 }}>
@@ -227,7 +272,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
   );
   // statement body as a callout card, so the slide has a clear visual block
   const calloutBody =
-    kind === "statement" && slide.body && !fullBleed ? (
+    kind === "statement" && slide.body && !fullBleed && !chalk ? (
       <div
         style={{
           fontFamily: bodyFont,
@@ -255,8 +300,9 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         color: fieldMuted,
         maxWidth: 860,
         whiteSpace: "pre-line",
-        textAlign: kind === "highlight" ? "center" : "left",
-        alignSelf: kind === "highlight" ? "center" : undefined,
+        textAlign: centred ? "center" : "left",
+        alignSelf: centred ? "center" : undefined,
+        ...(chalk ? { color: "#FFFFFF", fontWeight: 400, lineHeight: 1.5 } : {}),
       }}
     >
       {slide.body}
@@ -406,7 +452,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
             {kicker}
             {heading}
             {body}
-            <div style={{ display: "flex", gap: 16 * fit, flexWrap: "wrap", marginTop: 14 * fit }}>
+            <div style={{ display: "flex", gap: 16 * fit, flexWrap: "wrap", marginTop: 14 * fit, justifyContent: centred ? "center" : "flex-start" }}>
               {[
                 [I.save, "Save"],
                 [I.send, "Share"],
@@ -440,8 +486,9 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         return (
           <>
             {iconTile}
-            {kicker}
-            {heading}
+            {chalk && tipNo ? null : kicker}
+            {chalkHeading ?? heading}
+            {chalk && kind === "statement" && dashedRule}
             {calloutBody ?? body}
           </>
         );
@@ -503,8 +550,41 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
     );
   };
 
+  // Chalkboard: grainy charcoal + hand-drawn dashed doodles (pure SVG, exports identically)
+  const chalkLayer = () => {
+    const grain = `url("data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='400' height='400' filter='url(#n)'/></svg>`
+    )}")`;
+    const doodles = [
+      "M-20 520 C 80 470, 120 380, 60 330 S 40 220, 140 200",
+      "M1100 300 C 1000 340, 960 420, 1010 470 S 1040 560, 980 610",
+      "M-20 900 C 70 860, 120 800, 200 820",
+      "M1100 820 C 1020 780, 990 720, 1040 660",
+    ];
+    const d = doodles[index % doodles.length];
+    return (
+      <>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: grain, backgroundSize: "400px 400px", opacity: 0.16, mixBlendMode: "screen" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.35) 100%)" }} />
+        {kind !== "cta" && !fullBleed && (
+          <svg width={w} height={h} viewBox={`0 0 1080 ${h}`} style={{ position: "absolute", inset: 0 }}>
+            <path d={d} fill="none" stroke="#FFFFFF" strokeWidth={6} strokeDasharray="20 18" strokeLinecap="round" opacity={0.85} />
+          </svg>
+        )}
+        {kind === "cta" && (
+          <svg width={w} height={h} viewBox={`0 0 1080 ${h}`} style={{ position: "absolute", inset: 0 }}>
+            <path d={`M360 ${h - 250} C 480 ${h - 190}, 620 ${h - 200}, 700 ${h - 260} S 800 ${h - 350}, 830 ${h - 370}`} fill="none" stroke="#FFFFFF" strokeWidth={4} strokeDasharray="8 10" opacity={0.8} />
+            <path d={`M830 ${h - 380} l 100 -20 l -60 80 z M 858 ${h - 352} l 72 -48`} fill="none" stroke="#FFFFFF" strokeWidth={4} strokeLinejoin="round" />
+            <path d={`M330 ${h - 250} c -22 -30 -70 -10 -50 25 c 12 20 50 40 50 40 c 0 0 38 -20 50 -40 c 20 -35 -28 -55 -50 -25 z`} fill={accent} />
+          </svg>
+        )}
+      </>
+    );
+  };
+
   const backdrop = (() => {
     if (brandBg) return null; // imported branded background replaces template decoration
+    if (chalk) return chalkLayer();
     if (highlightField)
       return (
         <>
@@ -611,9 +691,18 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
         <div style={{ display: "flex", alignItems: "center", gap: 18, minHeight: 40 }}>
           {logoTop ? logoEl : identity ? <span style={{ fontWeight: 650, opacity: 0.9 }}>{identity}</span> : null}
         </div>
-        <span style={{ fontWeight: 600, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>
-          {index + 1}/{total}
-        </span>
+        {chalk ? (
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.25, fontSize: 24, fontVariantNumeric: "tabular-nums" }}>
+            <span style={{ color: accent, fontWeight: 600 }}>{index === total - 1 ? "Thanks for reading" : "Read more"}</span>
+            <span style={{ opacity: 0.85 }}>
+              Page {String(index + 1).padStart(2, "0")}/{String(total).padStart(2, "0")}
+            </span>
+          </span>
+        ) : (
+          <span style={{ fontWeight: 600, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>
+            {index + 1}/{total}
+          </span>
+        )}
       </div>
 
       {/* content */}
@@ -657,7 +746,16 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
           color: headerInk,
         }}
       >
-        {kind === "cta" && disclaimer ? (
+        {chalk ? (
+          <>
+            <span style={{ position: "absolute", left: 0, right: 0, top: -34, height: 2, background: "rgba(255,255,255,.55)" }} />
+            <span style={{ color: accent, fontWeight: 600 }}>{design.handle || (kind === "cta" && disclaimer ? disclaimer : "")}</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 14, fontWeight: 600 }}>
+              Save this post
+              <Icon d={I.save} size={34} color={accent} stroke={2.4} />
+            </span>
+          </>
+        ) : kind === "cta" && disclaimer ? (
           <span style={{ opacity: 0.6, fontSize: 22, maxWidth: 700, lineHeight: 1.3 }}>{disclaimer}</span>
         ) : (
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -666,7 +764,7 @@ export const SlideCanvas = forwardRef<HTMLDivElement, Props>(function SlideCanva
             ))}
           </div>
         )}
-        {logoBottom ? logoEl : index < total - 1 ? (
+        {chalk ? null : logoBottom ? logoEl : index < total - 1 ? (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 600, opacity: 0.75 }}>
             {index === 0 ? "Swipe" : ""}
             <Icon d={I.arrow} size={30} color={headerInk} stroke={2.6} />
