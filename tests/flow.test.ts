@@ -53,3 +53,28 @@ describe("slide export", () => {
     expect(opts(1080, 1350).includeQueryParams).toBe(true);
   });
 });
+
+describe("slide plans follow the kind of topic", () => {
+  it("plans an A vs B post as: cover, what is A, what is B, key differences, …, CTA", async () => {
+    const { slidePlan, topicShape, comparisonSides } = await import("@/lib/ai/prompts");
+    expect(topicShape("Botox vs fillers")).toBe("comparison");
+    expect(comparisonSides("Botox vs dermal fillers")).toEqual(["Botox", "dermal fillers"]);
+    const p = slidePlan("Botox vs dermal fillers", 6);
+    expect(p).toHaveLength(6);
+    expect(p[0]).toMatch(/^hook/);
+    expect(p[1]).toContain("WHAT IS BOTOX");
+    expect(p[2]).toContain("WHAT IS DERMAL FILLERS");
+    expect(p[3]).toMatch(/KEY DIFFERENCES/);
+    expect(p[5]).toMatch(/^cta/);
+  });
+
+  it("recognises other shapes and fits any length", async () => {
+    const { slidePlan, topicShape } = await import("@/lib/ai/prompts");
+    expect(topicShape("How to prepare for laser hair removal")).toBe("how_to");
+    expect(topicShape("5 signs your skincare is too harsh")).toBe("list");
+    expect(topicShape("Myths about sunscreen")).toBe("myths");
+    expect(topicShape("What is microneedling")).toBe("explainer");
+    for (let n = 1; n <= 7; n++) expect(slidePlan("Botox or filler?", n)).toHaveLength(n);
+    expect(slidePlan("What is microneedling", 4)[1]).toMatch(/WHAT IT IS/);
+  });
+});

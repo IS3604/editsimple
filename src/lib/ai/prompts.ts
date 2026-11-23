@@ -200,13 +200,110 @@ const KIND_GUIDE = `Slide kinds (content must fit the kind):
 - highlight: one memorable line as heading (≤ 16 words); body optional ≤ 12 words.
 - cta: last slide. heading ≤ 8 words; body ≤ 20 words; ask to save/share/follow/comment — never solicit clients.`;
 
-/** Structure rules depend on how many slides the post has. */
-export function structureFor(n: number) {
-  if (n <= 1)
-    return `This is a SINGLE-IMAGE post (1 slide). Put the whole value on one slide: a strong heading plus a list, checklist, myth_fact or comparison (or a statement). Do not use kind "hook" or "cta" — fold a short save/share line into the body if it fits.`;
-  if (n === 2) return `This is a 2-slide post: slide 1 kind "hook", slide 2 delivers the full payoff (list/checklist/steps/myth_fact/comparison) with a one-line save/share prompt in its body. No separate cta slide.`;
-  if (n === 3) return `This is a 3-slide post: hook → one value slide (list/steps/checklist/myth_fact/comparison) → cta.`;
-  return `Story: hook → why it matters → the useful part (${Math.max(1, n - 3)} slides) → takeaway → cta. First kind "hook", last kind "cta". Use at least 3 different kinds.`;
+/** What kind of post the subject calls for — decides the slide plan. */
+export type TopicShape = "comparison" | "how_to" | "myths" | "list" | "explainer";
+
+export function topicShape(subject: string): TopicShape {
+  const t = ` ${subject.toLowerCase()} `;
+  if (/\s(vs\.?|versus)\s|difference between|\bcompared? (to|with)\b|\bor\b.*\?|which is better|which one/.test(t)) return "comparison";
+  if (/\bhow to\b|\bsteps?\b|\bprepare\b|\bwhat to do\b|\broutine\b|\baftercare\b|\bguide\b/.test(t)) return "how_to";
+  if (/\bmyths?\b|\btruth\b|\bfacts?\b|\bmisconceptions?\b|\breally\b|\bdoes .* work\b/.test(t)) return "myths";
+  if (/\b\d+\b|\btips\b|\bways\b|\bsigns\b|\bmistakes\b|\breasons\b|\bthings\b|\bquestions\b/.test(t)) return "list";
+  return "explainer";
+}
+
+/** Splits "A vs B" style subjects into the two sides (best effort). */
+export function comparisonSides(subject: string): [string, string] | null {
+  const m = subject.match(/^(.*?)\s+(?:vs\.?|versus|or|compared (?:to|with))\s+(.*?)\??$/i) ?? subject.match(/difference between\s+(.*?)\s+and\s+(.*?)\??$/i);
+  if (!m) return null;
+  const clean = (x: string) => x.replace(/^(which is better[:,]?\s*|is\s+|should i get\s+)/i, "").trim();
+  const [a, b] = [clean(m[1]), clean(m[2])];
+  return a && b ? [a, b] : null;
+}
+
+/** Slide-by-slide plan for the subject's shape and the post length. Slide 1 is always the cover, the last is the CTA (≥ 3 slides). */
+export function slidePlan(subject: string, n: number): string[] {
+  const shape = topicShape(subject);
+  const sides = comparisonSides(subject);
+  const A = sides?.[0] ?? "option A",
+    B = sides?.[1] ?? "option B";
+  const plans: Record<TopicShape, string[]> = {
+    comparison: [
+      `hook — frame the choice so the reader feels it's their decision (e.g. "${A} or ${B}? Here's how to choose")`,
+      `statement or list — WHAT IS ${A.toUpperCase()}: plain-words definition, how it works, what it's best for`,
+      `statement or list — WHAT IS ${B.toUpperCase()}: the same points in the same order, so the two slides mirror each other`,
+      `comparison — KEY DIFFERENCES: two columns titled "${A}" and "${B}", each with the same 3 attributes in the same order (e.g. how it works / results / downtime or how long it lasts)`,
+      `comparison or list — WHO EACH ONE SUITS: when ${A} makes sense vs when ${B} does`,
+      `highlight — THE BOTTOM LINE: one honest sentence on how to decide (often: a consultation decides)`,
+      `cta — save/share/follow prompt`,
+    ],
+    how_to: [
+      "hook — the outcome the reader wants",
+      "statement — why doing it right matters (one concrete consequence)",
+      "steps — the steps in order (3–5), each an action",
+      "checklist or list — what to avoid / common mistakes",
+      "myth_fact — one belief people get wrong about it",
+      "highlight — the one thing to remember",
+      "cta — save/share/follow prompt",
+    ],
+    myths: [
+      "hook — name the belief people hold",
+      "myth_fact — myth 1 and the fact",
+      "myth_fact — myth 2 and the fact",
+      "myth_fact — myth 3 and the fact",
+      "statement — what's actually true, in plain words",
+      "highlight — the takeaway",
+      "cta — save/share/follow prompt",
+    ],
+    list: [
+      "hook — promise the list (number + who it's for)",
+      "list or checklist — items 1–3, each with a short why",
+      "list or checklist — items 4–6, each with a short why (no repeats)",
+      "statement — the one most people miss, explained",
+      "checklist — quick self-check the reader can do",
+      "highlight — the takeaway",
+      "cta — save/share/follow prompt",
+    ],
+    explainer: [
+      "hook — the question the reader has",
+      "statement — WHAT IT IS: a plain-words definition anyone understands",
+      "list — HOW IT WORKS or WHY IT MATTERS: 3 clear points",
+      "list or checklist — KEY POINTS: what to know before deciding",
+      "myth_fact — one common misunderstanding",
+      "highlight — the bottom line",
+      "cta — save/share/follow prompt",
+    ],
+  };
+  const full = plans[shape];
+  if (n <= 1) return [shape === "comparison" ? `comparison — ${A} vs ${B} side by side on 3 attributes; heading names both` : "the single most useful slide: heading + list/checklist/myth_fact/comparison"];
+  if (n === 2) return [full[0], shape === "comparison" ? full[3] : full[2]];
+  // keep cover + cta, choose the middle slides in priority order
+  const middle = full.slice(1, -1);
+  const priority: Record<TopicShape, number[]> = {
+    comparison: [0, 1, 2, 3, 4],
+    how_to: [1, 0, 2, 3, 4],
+    myths: [0, 1, 2, 4, 3],
+    list: [0, 1, 2, 4, 3],
+    explainer: [0, 1, 2, 4, 3],
+  };
+  const keep = priority[shape].slice(0, n - 2).sort((x, y) => x - y);
+  return [full[0], ...keep.map((i) => middle[i]), full[full.length - 1]];
+}
+
+/** Structure rules for the post: a concrete slide plan for this subject and length. */
+export function structureFor(n: number, subject = "") {
+  const plan = slidePlan(subject, n);
+  const shape = topicShape(subject);
+  const head =
+    n <= 1
+      ? `This is a SINGLE-IMAGE post (1 slide). Do not use kind "hook" or "cta" — fold a short save/share line into the body if it fits.`
+      : n === 2
+      ? `This is a 2-slide post: no separate cta slide; end slide 2 with a one-line save/share prompt in its body.`
+      : `This is a ${n}-slide post. First kind "hook", last kind "cta".`;
+  return `${head}
+This subject reads as a ${shape.replace("_", "-")} post. Follow this slide plan (kind — purpose), adapting the wording to the subject:
+${plan.map((x, i) => `${i + 1}. ${x}`).join("\n")}
+Each slide must add something new. No slide may just repeat the cover or say "let's dive in".`;
 }
 
 export function contentPrompt(p: {
@@ -240,19 +337,29 @@ Objective: ${p.objective}. Platform: ${p.platform}. Tone: ${p.tone}. Language: $
 Proven formats for this niche: ${n.formats.join("; ")}
 ${p.referenceNote ? `Reference context: ${p.referenceNote}` : ""}
 
-First decide the single sharpest angle (who exactly, which situation, what they get wrong). Then write.
+First decide the single sharpest angle (who exactly, which situation, what they get wrong). Then plan the slides, then write.
 Quality bar — every slide must pass:
-- Specific: names a real situation, symptom, document, right, deadline or habit relevant to ${r.label}. No vague advice ("stay healthy", "know your rights").
+- Easy to understand: write for a smart 14-year-old. Plain words, short sentences. Explain any medical or legal term in plain words the first time it appears (e.g. "neurotoxin (a muscle-relaxing injection)").
+- Meaningful on its own: each heading states the point of the slide, so a reader skimming only headings still learns the whole story.
+- Specific: names a real situation, treatment, symptom, document, right, deadline or habit relevant to ${r.label}. No vague advice ("stay healthy", "know your rights", "consult a professional" as the only point).
+- Accurate and balanced: describe typical ranges ("often", "usually", "for many people") rather than promises; no invented numbers.
 - One idea per slide. Readers should learn things they can act on today.
-- The cover must make the target person feel "this is about me".
+- The cover must make the target person feel "this is about me" and promise exactly what the slides deliver.
 
-${structureFor(p.slideCount)}
+${structureFor(p.slideCount, focus.subject)}
 
 ${KIND_GUIDE}
 
 kicker: ≤ 3 words that orient the reader (e.g. "Red flag", "Your right", "Step 2"); may be empty.
-visual_prompt: ONLY for the first slide (and optionally one statement slide); otherwise "". Describe a text-free photo or illustration that suits ${r.label}: subject, setting, lighting; subject centred with breathing room on all sides. Avoid clichés (stethoscope on desk, gavel and scales) unless reinvented. No text in the image.
+visual_prompt: ONLY for the first slide (and optionally one statement slide); otherwise "". Write it like a photo brief for THIS post's subject, so it could not be reused for another post:
+  - what is shown: the exact treatment, product, setting or moment the post is about (for a comparison, both sides visibly present, e.g. two treatment trays or a split scene), never a generic person posing;
+  - who: a specific person that matches the audience (age range, look, what they're doing), or no person if objects tell the story better;
+  - where and light: real setting in ${r.label} (modern clinic room, bathroom vanity, consultation desk, outdoors), natural light;
+  - style: realistic editorial photography with natural skin texture, calm and premium — not glossy stock, not a 3D render;
+  - composition: subject centred with breathing room on all sides.
+  Never: text, needles going into skin, blood, before/after splits, distressed faces, the cliché "woman touching her cheek in a mirror", stethoscope on desk, gavel and scales.
 Return exactly ${p.slideCount} slide(s).
+strategy.narrative = your slide plan, one short line per slide. strategy.visual_direction = one consistent look for all images in this post (palette, light, photographic style).
 JSON: {"strategy":{"angle","audience_insight","hook_options":[3 alternatives],"narrative":[...],"visual_direction"},"slides":[{"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt"}]}`;
 }
 
@@ -278,6 +385,8 @@ ${draftJson}
 Improve it. Checklist:
 1. Hook: would the target person stop scrolling? If not, rewrite it sharper and more specific.
 2. Replace any vague line with a concrete, accurate specific. Cut filler words. Shorter is better.
+2b. Clarity: plain words, any technical term explained once, each heading meaningful on its own. If the post compares two things, the two sides must be described with the same attributes in the same order.
+2c. Flow: every slide adds something new and follows from the one before; the cover's promise is delivered.
 3. Remove anything that could be an invented statistic, fake case or statute, or a promise of outcome.
 4. Compliance: ${rulesFor(niche, market).rules}
 5. Respect each kind's length limits so text fits on a 1080px slide.
@@ -306,6 +415,7 @@ Other slides (stay consistent, don't repeat): ${p.neighbours || "none"}
 Tone: ${p.tone}. Language: ${p.language}. Target keyword(s): ${p.keywords.join(", ") || "none"}.
 ${p.instruction ? `Editor's instruction: ${p.instruction}` : "Make it sharper, more specific and more useful than the current version."}
 Keep kind "${p.kind}" unless the instruction asks otherwise.
+Plain words a 14-year-old understands; explain any technical term; the heading must state the slide's point on its own.
 ${KIND_GUIDE}
 JSON: {"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt"}`;
 }

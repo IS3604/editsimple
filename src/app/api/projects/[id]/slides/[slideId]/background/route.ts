@@ -33,7 +33,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
     provider = "upload";
   } else {
     const body = z.object({ prompt: z.string().max(800).optional() }).parse(await req.json().catch(() => ({})));
-    const { data: brief } = await sb.from("content_briefs").select("strategy").eq("project_id", id).maybeSingle();
+    const { data: brief } = await sb.from("content_briefs").select("strategy,topic,niche").eq("project_id", id).maybeSingle();
     const d = project.design ?? {};
     // Match the generated image's aspect to the frame it fills on the slide, so nothing important is cropped.
     const fullBleed = slide.layout === "center" || slide.kind === "hook";
@@ -44,12 +44,18 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
       : aspect === "landscape"
       ? "Composition: wide landscape frame, subject centred horizontally and vertically, fully visible with comfortable margins; nothing important near the edges."
       : "Composition: tall frame, subject centred, fully visible with margin on all sides.";
+    const scene = body.prompt ?? slide.visual_prompt ?? `${slide.heading}${brief?.topic ? ` (post about: ${brief.topic})` : ""}`;
     prompt = [
+      `Scene: ${scene}.`,
+      brief?.topic ? `The image must clearly relate to this post's subject: "${brief.topic}".` : "",
       brief?.strategy?.visual_direction ? `Series style (keep consistent across slides): ${brief.strategy.visual_direction}.` : "",
-      `Scene: ${body.prompt ?? slide.visual_prompt ?? slide.heading}.`,
-      `Colour palette harmonised with ${d.colors?.background ?? ""} and ${d.colors?.accent ?? ""}; modern editorial photography or refined 3D illustration, natural light, high detail.`,
+      `Style: realistic editorial photography, shot on a 50mm lens, soft natural window light, true-to-life colours and natural skin texture (no plastic, airbrushed or CGI look), uncluttered premium setting.`,
+      `Colour mood harmonised with ${d.colors?.background ?? "the background"} and ${d.colors?.accent ?? "the accent"} without tinting the whole photo.`,
+      brief?.niche === "legal"
+        ? "Avoid clichés: gavels, scales of justice, courthouse columns."
+        : "Keep it calm and reassuring: no needles in skin, no blood, no surgery, no before/after split, no distressed or exaggerated faces, not a person touching their cheek in a mirror.",
       composition,
-    ].join(" ");
+    ].filter(Boolean).join(" ");
     const img = await generateBackground(prompt, aspect);
     ({ bytes, mime, provider } = img);
     w = img.width;
