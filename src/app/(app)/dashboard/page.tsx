@@ -35,7 +35,7 @@ export default function Dashboard() {
       <header className="mb-10 flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="text-[15px] text-muted-foreground">{greeting()}</p>
-          <h1 className="mt-1 max-w-3xl text-[34px] leading-[1.08] sm:text-[44px]">{niche === "legal" ? "What are your law-firm clients posting this week?" : "What are your doctor clients posting this week?"}</h1>
+          <h1 className="mt-1 max-w-3xl text-[34px] leading-[1.08] sm:text-[44px]">{niche === "legal" ? "What are your law-firm clients posting this week?" : "What are your aesthetic clients posting this week?"}</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/create">

@@ -46,3 +46,10 @@ describe("auth redirects", () => {
     expect(safeNext(null)).toBe("/dashboard");
   });
 });
+
+describe("slide export", () => {
+  it("caches images per full URL, so each post keeps its own background and logo", async () => {
+    const { opts } = await import("@/lib/export");
+    expect(opts(1080, 1350).includeQueryParams).toBe(true);
+  });
+});

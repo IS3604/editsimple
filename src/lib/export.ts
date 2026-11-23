@@ -65,11 +65,14 @@ async function fontCSSFor(node: HTMLElement) {
   return (await Promise.all(blocks)).join("\n");
 }
 
-const opts = (w: number, h: number, fontEmbedCSS?: string) => ({
+export const opts = (w: number, h: number, fontEmbedCSS?: string) => ({
   width: w,
   height: h,
   pixelRatio: 1, // node is already at native 1080px size
   cacheBust: true,
+  // Our images are all /api/assets?path=…; without this html-to-image caches by "/api/assets" alone,
+  // so every later export reused the first background or logo it saw.
+  includeQueryParams: true,
   style: { transform: "none" },
   ...(fontEmbedCSS !== undefined ? { fontEmbedCSS } : {}),
 });

@@ -63,7 +63,7 @@ export default function ClientsPage() {
     <div>
       <PageHeader
         title="Clients"
-        subtitle="One profile per doctor or law firm you manage — their market, voice and look. Pick a client when you start a post and everything fills in."
+        subtitle="One profile per practice or law firm you manage — their market, voice and look. Pick a client when you start a post and everything fills in."
         actions={<Button variant="accent" onClick={() => setEdit(blankClient(niche, market))}><Plus className="h-4 w-4" />Add client</Button>}
       />
 
@@ -166,7 +166,7 @@ export default function ClientsPage() {
       ) : (
         clients.length === 0 && (
           <Empty title="Add your first client" action={<Button className="mt-4" variant="accent" onClick={() => setEdit(blankClient(niche, market))}>Add client</Button>}>
-            Save each doctor or firm once — specialty, market, voice notes, template and logo — and every post starts on brand.
+            Save each practice or firm once — specialty, market, voice notes, template and logo — and every post starts on brand.
           </Empty>
         )
       )}
