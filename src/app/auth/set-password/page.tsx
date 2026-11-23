@@ -32,10 +32,21 @@ export default function SetPasswordPage() {
         if (hash.get("access_token") && hash.get("refresh_token")) {
           const { error } = await sb.auth.setSession({ access_token: hash.get("access_token")!, refresh_token: hash.get("refresh_token")! });
           if (error) throw error;
+          // email confirmation / magic link: already has a password (or doesn't need one) → straight in
+          if (["signup", "magiclink", "email_change"].includes(hash.get("type") ?? "")) {
+            router.replace("/dashboard");
+            router.refresh();
+            return;
+          }
           setInvited(hash.get("type") === "invite");
         } else if (q.get("token_hash") && q.get("type")) {
           const { error } = await sb.auth.verifyOtp({ token_hash: q.get("token_hash")!, type: q.get("type") as EmailOtpType });
           if (error) throw error;
+          if (["signup", "email", "magiclink", "email_change"].includes(q.get("type") ?? "")) {
+            router.replace("/dashboard");
+            router.refresh();
+            return;
+          }
           setInvited(q.get("type") === "invite");
         } else if (q.get("code")) {
           // the browser client exchanges ?code= itself on start-up; wait for it
@@ -53,7 +64,7 @@ export default function SetPasswordPage() {
         setState("invalid");
       }
     })();
-  }, []);
+  }, [router]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
