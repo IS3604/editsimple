@@ -147,3 +147,10 @@ Create → fill brief & design (or load a saved brand kit) → **Research keywor
 
 ## Website section (editsimple.in)
 See WEBSITE-SETUP.md for the database, edge functions, push keys, data move and website switch.
+
+## Accounts, admin & invites
+1. Supabase → SQL Editor: run `supabase/migrations/0005_app_admins.sql` (makes ishpreet@editsimple.in the owner/admin).
+2. Vercel → Environment Variables: add `SUPABASE_SERVICE_ROLE_KEY` (Supabase → Project Settings → API keys → service_role / secret key). Server-only, never `NEXT_PUBLIC_`. Redeploy.
+3. Supabase → Authentication → URL Configuration: Site URL `https://editsimple.vercel.app`, Redirect URLs `https://editsimple.vercel.app/**`.
+4. Supabase → Authentication → Emails → SMTP Settings: turn on custom SMTP (e.g. Resend: host `smtp.resend.com`, port `465`, user `resend`, password = Resend API key, sender `no-reply@editsimple.in`). Supabase's built-in email only reaches your own Supabase team members and a few emails per hour, so sign-up confirmations and invites to anyone else never arrive without this.
+5. Admins sign in at `/admin/login` → **Admin** in the sidebar → invite people, resend invites, make/remove admins, remove accounts.

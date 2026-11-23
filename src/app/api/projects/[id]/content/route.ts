@@ -32,7 +32,8 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
 
   await setStage(sb, id, project.stage, "generating");
   try {
-    const { keywords } = await selectedKeywords(sb, id);
+    const { keywords: picked } = await selectedKeywords(sb, id);
+    const keywords = picked.length ? picked : (brief.user_keywords ?? []);
     const ref = brief.reference_url ? await readReference(brief.reference_url) : null;
     const template = TEMPLATES[project.design?.template as keyof typeof TEMPLATES] ?? TEMPLATES.studio;
 
@@ -52,7 +53,7 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
         language: brief.language ?? "English",
         platform: project.platform,
         slideCount: project.slide_count,
-        keywords: keywords.length ? keywords : brief.user_keywords,
+        keywords,
         templateLabel: template.label,
         referenceNote: ref?.text ?? undefined,
       }),
@@ -66,7 +67,7 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
       try {
         content = await chatJSON({
           system: systemFor(niche, market),
-          user: editorPrompt(JSON.stringify(content), niche, market),
+          user: editorPrompt(JSON.stringify(content), niche, market, keywords),
           schema: ContentSchema,
           temperature: 0.4,
           effort: "low",

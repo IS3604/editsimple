@@ -87,8 +87,11 @@ export default function KeywordsPage() {
                 <p className="text-[15px]">
                   {res.research.topic} <span className="text-[13px] text-muted-foreground">checked {new Date(res.research.created_at).toLocaleString()}</span>
                 </p>
-                <Link href={`/create?niche=${niche}&topic=${encodeURIComponent(res.research.topic)}`}>
-                  <Button size="sm" variant="soft"><PenLine className="h-3.5 w-3.5" />Write a post on this</Button>
+                {/* the post is written about the keyword you have open (click a row to choose it) */}
+                <Link href={`/create?niche=${niche}&topic=${encodeURIComponent(focus ?? res.research.topic)}`}>
+                  <Button size="sm" variant="soft" title="Click a keyword in the table to choose it">
+                    <PenLine className="h-3.5 w-3.5" />Write a post on “{(focus ?? res.research.topic).slice(0, 40)}”
+                  </Button>
                 </Link>
               </div>
               <Sources sources={res.research.sources} />

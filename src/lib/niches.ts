@@ -1,4 +1,4 @@
-/** Doctor & lawyer niches — the client types EditSimple's content team serves. Client-safe. */
+/** Aesthetic-doctor (derm, plastic surgery, med spa) & lawyer niches — the client types EditSimple's content team serves. Client-safe. */
 import { MARKETS, type MarketCode } from "@/lib/markets";
 
 export type Niche = "medical" | "legal";
@@ -8,6 +8,7 @@ export const NICHES: Record<
   {
     label: string;
     who: string;
+    whoPlural: string;
     clientNoun: string;
     color: string;
     specialties: string[];
@@ -20,40 +21,45 @@ export const NICHES: Record<
   }
 > = {
   medical: {
-    label: "Doctors",
-    who: "doctor",
+    label: "Aesthetic doctors",
+    who: "dermatology or aesthetic practice (dermatologist, plastic surgeon or med spa)",
+    whoPlural: "dermatologists, plastic surgeons, aesthetic practices and med spas",
     clientNoun: "practice",
     color: "#0F7C72",
     specialties: [
-      "General practice / family medicine", "Cardiology", "Dermatology", "Aesthetic medicine", "Obstetrics & gynaecology", "Fertility / IVF", "Paediatrics",
-      "Orthopaedics & sports medicine", "Endocrinology & diabetes", "Psychiatry & mental health", "Gastroenterology", "Neurology", "Plastic surgery",
-      "Dentistry & orthodontics", "Ophthalmology", "Nutrition & weight management", "Physiotherapy", "Oncology",
+      "Dermatology", "Cosmetic dermatology", "Plastic surgery", "Facial plastic surgery", "Aesthetic medicine", "Med spa",
+      "Injectables (Botox & fillers)", "Laser & energy-based treatments", "Hair restoration", "Body contouring", "Skin care & acne", "Oculoplastic surgery",
     ],
-    audiences: ["Adults 30–55 managing their health", "New and expecting parents", "Busy professionals", "Older adults and caregivers", "Women's health seekers", "Active and fitness-minded adults"],
+    audiences: [
+      "Adults 25–45 considering cosmetic treatments", "First-time Botox and filler patients", "People with acne, scarring or pigmentation",
+      "Adults 40–65 interested in anti-ageing", "Patients researching surgery (rhinoplasty, facelift, breast)", "Men interested in aesthetics and hair loss",
+    ],
     newsQueries: [
-      "\"new study\" health",
-      "FDA approval OR CDC OR NHS OR WHO health",
-      "disease outbreak OR virus cases",
-      "doctors warn",
-      "new treatment OR breakthrough medicine",
+      "dermatology OR dermatologist",
+      "\"plastic surgery\" OR \"plastic surgeon\" OR \"cosmetic surgery\"",
+      "\"med spa\" OR medspa OR \"aesthetic clinic\"",
+      "Botox OR \"dermal filler\" OR injectables",
+      "skincare OR \"skin care\" study OR FDA",
+      "laser treatment OR microneedling OR \"hair loss\" treatment",
     ],
-    youtubeQuery: "doctor explains",
+    youtubeQuery: "dermatologist explains",
     formats: [
-      "Myth vs fact (busting a common health belief)",
-      "Warning signs checklist (when to see a doctor)",
-      "What actually happens during a procedure or test",
-      "Mistakes patients make with a condition or medicine",
-      "News explainer (what this study or outbreak means for you)",
-      "Do vs don't for a common situation",
-      "Questions to ask your doctor about…",
+      "Myth vs fact (busting a common skin or cosmetic belief)",
+      "What actually happens during a treatment (Botox, filler, laser, surgery)",
+      "Recovery and downtime, day by day",
+      "Mistakes patients make before or after a treatment",
+      "News or trend explainer (a viral skincare trend or new study)",
+      "Do vs don't for skin care or aftercare",
+      "Questions to ask before choosing an injector or surgeon",
     ],
     compliance:
-      "Educational only. No diagnosis or individual treatment advice, no dosages, no cure or outcome guarantees, no superiority claims, no patient testimonials or identifiable patient details, no fear-mongering. Encourage seeing a qualified clinician for symptoms.",
-    disclaimer: "For general education only. Not medical advice.",
+      "Educational only. No diagnosis or individual treatment advice, no dosages or unit counts as advice, no guaranteed results or 'no downtime' claims, no superiority claims, no before-and-after or patient stories without consent, no body shaming or fear-mongering. Encourage an in-person consultation with a qualified clinician.",
+    disclaimer: "For general education only. Not medical advice. Results vary; consult a qualified clinician.",
   },
   legal: {
     label: "Lawyers",
     who: "lawyer",
+    whoPlural: "lawyers",
     clientNoun: "firm",
     color: "#8C2F3C",
     specialties: [

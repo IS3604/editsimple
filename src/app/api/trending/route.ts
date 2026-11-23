@@ -26,7 +26,7 @@ export type TrendingPayload = {
 const cache = new Map<string, { at: number; data: TrendingPayload }>();
 const TTL = 60 * 60 * 1000;
 
-/** Trending for doctors or lawyers: real headlines + real YouTube stats + AI post ideas built from them. */
+/** Trending for aesthetic practices or lawyers: real headlines + real YouTube stats + AI post ideas built from them. */
 export const GET = handle(async (req: Request) => {
   await requireUser();
   const url = new URL(req.url);

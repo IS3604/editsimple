@@ -84,13 +84,13 @@ export const TrendIdeasSchema = z.object({
 
 // ---------------- shared voice ----------------
 /**
- * EditSimple is a content agency: editors and writers producing posts on behalf of doctor and lawyer clients,
+ * EditSimple is a content agency: editors and writers producing posts on behalf of dermatology / aesthetic and lawyer clients,
  * most of them outside India. Every prompt is written from that seat.
  */
 export function systemFor(niche: Niche, market: MarketCode = "US") {
   const n = NICHES[niche];
   const r = rulesFor(niche, market);
-  return `You are the senior content strategist at EditSimple, an agency that writes, designs and manages social content for ${n.who}s.
+  return `You are the senior content strategist at EditSimple, an agency that writes, designs and manages social content for ${n.whoPlural}.
 You are writing on behalf of a client ${n.who}, in the client's professional voice, for their audience in ${r.label}.
 Context to use: ${r.context}. Spelling: ${r.spelling}. Currency: ${r.currency}.
 Your posts get saved and shared because they are specific, accurate and genuinely useful — never generic filler.
@@ -123,7 +123,7 @@ ${hot.length ? `These are the fastest-growing YouTube videos on this topic in ${
 ${hot.map((h) => `- ${h.title} — ${h.views_per_day}/day — ${h.tags.slice(0, 8).join(", ")}`).join("\n")}
 At least half of your keywords must reuse the exact phrasing, questions and angles from the highest views-per-day videos (not channel names or clickbait), because that is proven demand.` : ""}
 If an English Wikipedia article clearly matches a keyword's core concept, give its exact title in "wikipedia_title".
-Also give up to 12 hashtags (no spaces) mixing broad and niche tags used by ${NICHES[p.niche].who}s in ${r.label}.
+Also give up to 12 hashtags (no spaces) mixing broad and niche tags used by ${NICHES[p.niche].whoPlural} in ${r.label}.
 Never include numbers, volumes or popularity claims.
 JSON: {"keywords":[{"keyword","related_topic","kind","wikipedia_title"}],"hashtags":[...]}`;
 }
@@ -182,7 +182,7 @@ export function trendIdeasPrompt(niche: Niche, market: MarketCode, headlines: { 
   return `These are real news headlines from the last 7 days in ${r.label} (index: title — source):
 ${headlines.map((h, i) => `[${i}] ${h.title} — ${h.source}`).join("\n")}
 
-We create content for ${n.who}s. Turn the most relevant headlines into up to 8 Instagram post ideas that explain what the news means for ordinary people.
+We create content for ${n.whoPlural}. Turn the most relevant headlines into up to 8 Instagram post ideas that explain what the news means for ordinary people.
 Skip celebrity gossip, politics without a practical angle, and anything that needs speculation.
 For each: topic (≤ 12 words), hook (cover line ≤ 12 words), format (one of: ${n.formats.join("; ")}), why_now (what happened, briefly), headline_refs (indexes used).
 JSON: {"ideas":[{"topic","hook","format","why_now","headline_refs":[]}]}`;
@@ -229,14 +229,14 @@ export function contentPrompt(p: {
 }) {
   const n = NICHES[p.niche];
   const r = rulesFor(p.niche, p.market);
+  const focus = keywordFocus(p.topic, p.keywords);
   return `Write a ${p.slideCount}-slide Instagram/LinkedIn post for our client.
 Client: ${p.clientName || `a ${n.who}`}${p.specialty ? ` — ${p.specialty}` : ""}. Audience location: ${r.label}.
 ${p.clientNotes ? `Account notes (follow them): ${p.clientNotes}` : ""}
-Topic: ${p.topic}
+${focus.line}
 ${p.hook ? `Cover hook chosen by the editor (use it on slide 1, tighten wording if needed): "${p.hook}"` : ""}
 Audience: ${p.audience || "general public"}
 Objective: ${p.objective}. Platform: ${p.platform}. Tone: ${p.tone}. Language: ${p.language} (${r.spelling} spelling if English).
-Keywords to weave in naturally (not stuffed): ${p.keywords.join(", ") || "none"}
 Proven formats for this niche: ${n.formats.join("; ")}
 ${p.referenceNote ? `Reference context: ${p.referenceNote}` : ""}
 
@@ -257,7 +257,21 @@ JSON: {"strategy":{"angle","audience_insight","hook_options":[3 alternatives],"n
 }
 
 /** Second pass: an editor sharpens the draft. */
-export function editorPrompt(draftJson: string, niche: Niche, market: MarketCode) {
+/** The editor's chosen keywords decide what the post is about; the topic is only context when it differs. */
+export function keywordFocus(topic: string, keywords: string[]) {
+  const kws = keywords.map((k) => k.trim()).filter(Boolean);
+  if (!kws.length) return { subject: topic, line: `Topic: ${topic}` };
+  const coversTopic = kws.some((k) => k.toLowerCase() === topic.trim().toLowerCase());
+  return {
+    subject: kws[0],
+    line:
+      `TARGET KEYWORD${kws.length > 1 ? "S" : ""} chosen by the editor (this is what the post is about): ${kws.map((k) => `"${k}"`).join(", ")}.
+Build the angle, the cover and every slide around ${kws.length > 1 ? `these keywords, led by "${kws[0]}"` : `"${kws[0]}"`}. Use ${kws.length > 1 ? "the first keyword" : "it"} (or a close natural variant) on the cover.
+Do not switch the subject to any other keyword or topic.` + (coversTopic ? "" : `\nBackground (context only, not the subject): ${topic}`),
+  };
+}
+
+export function editorPrompt(draftJson: string, niche: Niche, market: MarketCode, keywords: string[] = []) {
   return `You are EditSimple's senior editor reviewing a writer's draft before it goes to the client (JSON):
 ${draftJson}
 
@@ -268,7 +282,7 @@ Improve it. Checklist:
 4. Compliance: ${rulesFor(niche, market).rules}
 5. Respect each kind's length limits so text fits on a 1080px slide.
 6. Make the ending earn a save or share.
-Keep the same JSON shape and the same number of slides. Return the improved JSON only.`;
+${keywords.length ? `7. The post must stay about the editor's chosen keyword(s): ${keywords.map((k) => `"${k}"`).join(", ")}. Don't drift to another subject.\n` : ""}Keep the same JSON shape and the same number of slides. Return the improved JSON only.`;
 }
 
 export function regenerateSlidePrompt(p: {
@@ -286,10 +300,10 @@ export function regenerateSlidePrompt(p: {
   neighbours: string;
   instruction?: string;
 }) {
-  return `Rewrite slide ${p.position + 1} of ${p.total} for a post on "${p.topic}" for ${p.audience || "the general public"} in ${rulesFor(p.niche, p.market).label} (client: ${NICHES[p.niche].who}).
+  return `Rewrite slide ${p.position + 1} of ${p.total} for a post on "${keywordFocus(p.topic, p.keywords).subject}" for ${p.audience || "the general public"} in ${rulesFor(p.niche, p.market).label} (client: ${NICHES[p.niche].who}).
 Current slide: ${p.current}
 Other slides (stay consistent, don't repeat): ${p.neighbours || "none"}
-Tone: ${p.tone}. Language: ${p.language}. Keywords if natural: ${p.keywords.join(", ") || "none"}.
+Tone: ${p.tone}. Language: ${p.language}. Target keyword(s): ${p.keywords.join(", ") || "none"}.
 ${p.instruction ? `Editor's instruction: ${p.instruction}` : "Make it sharper, more specific and more useful than the current version."}
 Keep kind "${p.kind}" unless the instruction asks otherwise.
 ${KIND_GUIDE}

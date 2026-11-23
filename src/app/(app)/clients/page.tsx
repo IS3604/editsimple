@@ -154,7 +154,7 @@ export default function ClientsPage() {
           <aside className="hidden xl:block">
             <div className="sticky top-8">
               <PhonePreview
-                slide={{ id: "client", kind: "hook", role: "hook", kicker: edit.specialty ?? "", heading: kitNiche === "legal" ? "What to do in the first 24 hours after an accident" : "Chest pain after 40 is not always heartburn", body: "", layout: "center", style: {}, background_path: null }}
+                slide={{ id: "client", kind: "hook", role: "hook", kicker: edit.specialty ?? "", heading: kitNiche === "legal" ? "What to do in the first 24 hours after an accident" : "Will Botox make me look frozen?", body: "", layout: "center", style: {}, background_path: null }}
                 design={design}
                 size="1080x1350"
                 total={7}

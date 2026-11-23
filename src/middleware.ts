@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-const PUBLIC = ["/login", "/auth", "/sw.js"];
+const PUBLIC = ["/login", "/auth", "/admin/login", "/sw.js"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
@@ -20,7 +20,9 @@ export async function middleware(req: NextRequest) {
   const isApi = path.startsWith("/api");
   if (!data.user && !isApi && !PUBLIC.some((p) => path.startsWith(p))) {
     const url = req.nextUrl.clone();
-    url.pathname = "/login";
+    // admin pages have their own sign-in screen; everything else uses the normal one
+    url.pathname = path.startsWith("/admin") ? "/admin/login" : "/login";
+    url.search = path === "/" ? "" : `?next=${encodeURIComponent(path)}`;
     return NextResponse.redirect(url);
   }
   return res;

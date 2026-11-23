@@ -41,7 +41,11 @@ export async function selectedKeywords(sb: SupabaseClient, projectId: string) {
   const { data } = await sb.from("keyword_metrics").select("keyword,kind,selected").eq("research_id", r.id);
   const rows = data ?? [];
   return {
-    keywords: rows.filter((k) => k.selected && k.kind !== "hashtag").map((k) => k.keyword),
+    // keywords the editor ticked lead; the original topic (seed) goes last so a deliberate pick becomes the subject
+    keywords: rows
+      .filter((k) => k.selected && k.kind !== "hashtag")
+      .sort((a, b) => Number(a.kind === "seed") - Number(b.kind === "seed"))
+      .map((k) => k.keyword),
     hashtags: rows.filter((k) => k.kind === "hashtag").map((k) => k.keyword),
   };
 }

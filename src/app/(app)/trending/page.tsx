@@ -26,7 +26,7 @@ export default function TrendingPage() {
             value={niche}
             onChange={setNiche}
             options={[
-              { value: "medical", label: "Doctors" },
+              { value: "medical", label: "Aesthetics" },
               { value: "legal", label: "Lawyers" },
             ]}
           />

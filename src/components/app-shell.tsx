@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FolderOpen, Globe, Globe2, Home, LogOut, Menu, Newspaper, Plus, Search, Stethoscope, Scale, Users, X } from "lucide-react";
+import { FolderOpen, Globe, Globe2, Home, ShieldCheck, LogOut, Menu, Newspaper, Plus, Search, Stethoscope, Scale, Users, X } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { ToastProvider } from "@/components/feedback";
 import { PushPrompt } from "@/components/push";
@@ -53,7 +53,7 @@ export function NicheSwitch({ className }: { className?: string }) {
     <div className={cn("grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1", className)} role="radiogroup" aria-label="Workspace">
       {(
         [
-          ["medical", "Doctors", Stethoscope],
+          ["medical", "Aesthetics", Stethoscope],
           ["legal", "Lawyers", Scale],
         ] as const
       ).map(([v, label, Icon]) => (
@@ -77,8 +77,10 @@ export function NicheSwitch({ className }: { className?: string }) {
 
 /** Shown only to people on the EditSimple Website team (eds_is_admin). */
 const WEBSITE = { href: "/website", label: "Website", icon: Globe };
+/** Shown only to Studio admins (is_app_admin): invites and accounts. */
+const ADMIN = { href: "/admin", label: "Admin", icon: ShieldCheck };
 
-export function AppShell({ email, websiteAdmin = false, children }: { email: string; websiteAdmin?: boolean; children: React.ReactNode }) {
+export function AppShell({ email, websiteAdmin = false, studioAdmin = false, children }: { email: string; websiteAdmin?: boolean; studioAdmin?: boolean; children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -127,7 +129,7 @@ export function AppShell({ email, websiteAdmin = false, children }: { email: str
         </Link>
 
         <nav className="mt-5 flex flex-1 flex-col gap-0.5">
-          {(websiteAdmin ? [...NAV, WEBSITE] : NAV).map(({ href, label, icon: Icon }) => {
+          {[...NAV, ...(websiteAdmin ? [WEBSITE] : []), ...(studioAdmin ? [ADMIN] : [])].map(({ href, label, icon: Icon }) => {
             const active = path === href || (href !== "/dashboard" && path.startsWith(href));
             return (
               <Link

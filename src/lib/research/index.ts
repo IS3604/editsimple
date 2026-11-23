@@ -61,19 +61,14 @@ const vpd = (r: KeywordMetric) => r.youtube_stats?.median_views_per_day ?? -1;
 
 /**
  * Your topic and your own keywords first; then the phrases pulling the most YouTube views per day,
- * then viral potential. Pre-selects the top 3 by views/day (falling back to viral score).
+ * then viral potential. Only the topic and your own keywords start selected: the post is written
+ * around exactly what you tick, so nothing else is added for you.
  */
 export function rankRows(rows: KeywordMetric[]) {
   const pri = (r: KeywordMetric) => (r.kind === "seed" ? 2 : r.kind === "user" ? 1 : 0);
   rows.sort((a, b) => pri(b) - pri(a) || vpd(b) - vpd(a) || (b.ai_opportunity_score ?? -1) - (a.ai_opportunity_score ?? -1));
-  let picked = 0;
   rows.forEach((r) => {
-    r.selected = false;
-    if (r.kind === "seed" || r.kind === "user") r.selected = true;
-    else if (picked < 3) {
-      r.selected = true;
-      picked++;
-    }
+    r.selected = r.kind === "seed" || r.kind === "user";
   });
   return rows;
 }

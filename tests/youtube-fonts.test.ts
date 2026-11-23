@@ -38,10 +38,10 @@ const row = (keyword: string, kind: KeywordMetric["kind"], vpdValue: number | nu
   }) as KeywordMetric;
 
 describe("keyword ranking", () => {
-  it("puts your topic first, then the highest YouTube views/day, and pre-selects the top 3", () => {
+  it("puts your topic first, then the highest YouTube views/day, and only pre-selects your topic", () => {
     const rows = rankRows([row("slow", "related", 50, 90), row("topic", "seed", 10), row("hot", "long_tail", 40000, 40), row("warm", "related", 3000), row("none", "related", null, 99), row("mid", "related", 900)]);
     expect(rows.map((r) => r.keyword)).toEqual(["topic", "hot", "warm", "mid", "slow", "none"]);
-    expect(rows.filter((r) => r.selected).map((r) => r.keyword)).toEqual(["topic", "hot", "warm", "mid"]);
+    expect(rows.filter((r) => r.selected).map((r) => r.keyword)).toEqual(["topic"]); // only what the editor chose
   });
 });
 

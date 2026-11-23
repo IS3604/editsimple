@@ -238,7 +238,7 @@ export default function CreatePage() {
       kind: "hook" as const,
       role: "hook",
       kicker: form.specialty || (form.niche === "legal" ? "Know your rights" : "Health"),
-      heading: (form.hook || form.topic || (form.niche === "legal" ? "What to do if your landlord keeps the deposit" : "Chest pain after 40 is not always gas")).slice(0, 120),
+      heading: (form.hook || form.topic || (form.niche === "legal" ? "What to do if your landlord keeps the deposit" : "Will Botox make me look frozen?")).slice(0, 120),
       body: "",
       layout: "center" as const,
       style: {},
@@ -551,7 +551,7 @@ export default function CreatePage() {
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="text-[15px]">
-                      Tick the phrases to weave into your slides. <span className="text-muted-foreground">Highest viral potential first.</span>
+                      Tick the keywords this post should be about. <span className="text-muted-foreground">It&apos;s written around exactly what you tick ({selectedCount} selected). Highest YouTube views/day first.</span>
                     </p>
                     <Sources sources={research.sources} />
                   </div>
