@@ -3,7 +3,7 @@ import { z } from "zod";
 import { handle, HttpError } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
 import { getProject } from "@/lib/data";
-import { generateBackground } from "@/lib/ai/image";
+import { generateBackground, safeFallbackPrompt } from "@/lib/ai/image";
 import { ALLOWED_IMAGE, MAX_UPLOAD, extFor, putObject } from "@/lib/storage";
 
 export const maxDuration = 120;
@@ -53,10 +53,10 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
       `Colour mood harmonised with ${d.colors?.background ?? "the background"} and ${d.colors?.accent ?? "the accent"} without tinting the whole photo.`,
       brief?.niche === "legal"
         ? "Avoid clichés: gavels, scales of justice, courthouse columns."
-        : "Keep it calm and reassuring: no needles in skin, no blood, no surgery, no before/after split, no distressed or exaggerated faces, not a person touching their cheek in a mirror.",
+        : "Keep it calm, reassuring and everyday: products, tools at rest, a consultation conversation or a relaxed natural portrait. No treatment shown in progress, no side-by-side comparison of faces, no posed mirror shots.",
       composition,
     ].filter(Boolean).join(" ");
-    const img = await generateBackground(prompt, aspect);
+    const img = await generateBackground(prompt, aspect, safeFallbackPrompt(brief?.niche, [d.colors?.background, d.colors?.accent].filter(Boolean).join(" and ")) + ` ${composition}`);
     ({ bytes, mime, provider } = img);
     w = img.width;
     h = img.height;

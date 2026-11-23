@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const script: Record<string, (() => unknown)[]> = {};
-const calls: { model: string; output_format?: string }[] = [];
+const calls: { model: string; output_format?: string; prompt?: string }[] = [];
 vi.mock("openai", () => {
   class OpenAI {
     images = {
-      generate: async (p: { model: string; output_format?: string }) => {
-        calls.push({ model: p.model, output_format: p.output_format });
+      generate: async (p: { model: string; output_format?: string; prompt?: string }) => {
+        calls.push({ model: p.model, output_format: p.output_format, prompt: p.prompt });
         const next = script[p.model]?.shift();
         if (!next) throw Object.assign(new Error(`The model '${p.model}' does not exist.`), { status: 400 });
         return next();
@@ -56,7 +56,7 @@ describe("image generation", () => {
     const img = await generateBackground("x", "landscape");
     expect(img.mime).toBe("image/png");
     expect(img.width).toBe(1536);
-    expect(calls).toEqual([{ model: "gpt-image-2.5-flare", output_format: "jpeg" }, { model: "gpt-image-2.5-flare", output_format: undefined }]);
+    expect(calls.map(({ model, output_format }) => ({ model, output_format }))).toEqual([{ model: "gpt-image-2.5-flare", output_format: "jpeg" }, { model: "gpt-image-2.5-flare", output_format: undefined }]);
   });
 
   it("surfaces account problems instead of hiding them", async () => {
@@ -74,5 +74,21 @@ describe("image generation", () => {
   it("defaults to a current model when none is configured", async () => {
     const { imageCandidates } = await load("");
     expect(imageCandidates("")[0]).toBe("gpt-image-2.5-flare");
+  });
+
+  it("when OpenAI's safety system refuses the prompt, retries once with a calm fallback scene", async () => {
+    script["gpt-image-2.5-flare"] = [err(400, "Your request was rejected by the safety system.", { code: "moderation_blocked" }), ok(JPEG)];
+    const { generateBackground } = await load("gpt-image-2.5-flare");
+    const img = await generateBackground("botox injection close-up", "portrait", "a calm clinic room");
+    expect(img.mime).toBe("image/jpeg");
+    expect(calls).toHaveLength(2);
+    expect(calls[1].prompt).toContain("a calm clinic room");
+  });
+
+  it("without a fallback, a safety refusal is reported (not mistaken for a retired model)", async () => {
+    script["gpt-image-2.5-flare"] = [err(400, "Your request was rejected by the safety system.")];
+    const { generateBackground } = await load("gpt-image-2.5-flare");
+    await expect(generateBackground("x", "square")).rejects.toThrow(/safety system/);
+    expect(calls).toHaveLength(1);
   });
 });

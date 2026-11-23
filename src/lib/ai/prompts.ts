@@ -357,7 +357,8 @@ visual_prompt: ONLY for the first slide (and optionally one statement slide); ot
   - where and light: real setting in ${r.label} (modern clinic room, bathroom vanity, consultation desk, outdoors), natural light;
   - style: realistic editorial photography with natural skin texture, calm and premium — not glossy stock, not a 3D render;
   - composition: subject centred with breathing room on all sides.
-  Never: text, needles going into skin, blood, before/after splits, distressed faces, the cliché "woman touching her cheek in a mirror", stethoscope on desk, gavel and scales.
+  Show treatments through products, tools at rest, the clinic setting or a consultation — never a procedure in progress or anything graphic (image services refuse those).
+  Avoid: text, before/after splits, distressed faces, the cliché "woman touching her cheek in a mirror", stethoscope on desk, gavel and scales.
 Return exactly ${p.slideCount} slide(s).
 strategy.narrative = your slide plan, one short line per slide. strategy.visual_direction = one consistent look for all images in this post (palette, light, photographic style).
 JSON: {"strategy":{"angle","audience_insight","hook_options":[3 alternatives],"narrative":[...],"visual_direction"},"slides":[{"kind","role","kicker","heading","body","items":[{"title","text"}],"visual_prompt"}]}`;
