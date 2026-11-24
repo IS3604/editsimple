@@ -24,6 +24,12 @@ describe("website leads", () => {
     expect(leadSource(lead({ fields: { "UTM Source": "google", "UTM Medium": "cpc" } })).channel).toBe("paid");
     expect(leadSource(lead({ referrer: "https://www.google.com/" })).channel).toBe("organic");
     expect(leadSource(lead()).channel).toBe("unknown");
+    // X links
+    expect(leadSource(lead({ fields: { "UTM Source": "x", "UTM Medium": "social", "UTM Campaign": "bio" } }))).toMatchObject({ channel: "social", source: "X", campaign: "bio" });
+    expect(leadSource(lead({ fields: { "UTM Source": "x", "UTM Medium": "social", "UTM Campaign": "post" } })).source).toBe("X");
+    expect(leadSource(lead({ fields: { "UTM Source": "x", "UTM Medium": "paid_social", "UTM Campaign": "x_ads" } }))).toMatchObject({ channel: "paid", source: "X", campaign: "x_ads" });
+    expect(leadSource(lead({ referrer: "https://t.co/abc123" }))).toMatchObject({ channel: "social", source: "X" });
+    expect(leadSource(lead({ fields: { "First Referrer": "https://twitter.com/editsimple" } })).source).toBe("X");
   });
 
   it("fills missing form fields from the table columns", () => {

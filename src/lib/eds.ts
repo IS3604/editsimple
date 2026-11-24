@@ -77,7 +77,7 @@ const nice = (s: string) => {
   const h = s.replace(/^www\./, '').replace(/\.(com|in|co\.in|net|org|co)$/i, '');
   return ({ fb: 'Facebook', 'm.facebook': 'Facebook', 'l.facebook': 'Facebook', 'lm.facebook': 'Facebook', ig: 'Instagram', 'l.instagram': 'Instagram',
     li: 'LinkedIn', linkedin: 'LinkedIn', lnkd: 'LinkedIn', yt: 'YouTube', youtube: 'YouTube', 'm.youtube': 'YouTube', youtu: 'YouTube',
-    whatsapp: 'WhatsApp', wa: 'WhatsApp', 'web.whatsapp': 'WhatsApp', 't.co': 'X', x: 'X', twitter: 'X', email: 'Email',
+    whatsapp: 'WhatsApp', wa: 'WhatsApp', 'web.whatsapp': 'WhatsApp', 't.co': 'X', t: 'X', x: 'X', twitter: 'X', 'mobile.twitter': 'X', email: 'Email',
     tiktok: 'TikTok', duckduckgo: 'DuckDuckGo', chatgpt: 'ChatGPT', '(direct)': 'Direct' } as Record<string, string>)[h.toLowerCase()]
     ?? h.charAt(0).toUpperCase() + h.slice(1);
 };
