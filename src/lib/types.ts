@@ -43,6 +43,7 @@ export const BriefInputSchema = z.object({
   hook: z.string().trim().max(140).optional().default(""),
   industry: z.string().trim().max(120).optional().default(""),
   audience: z.string().trim().max(200).optional().default(""),
+  audienceType: z.enum(["public", "pros"]).default("public"),
   platform: z.enum(PLATFORMS),
   slideCount: z.coerce.number().int().min(1).max(7),
   objective: z.enum(OBJECTIVES),

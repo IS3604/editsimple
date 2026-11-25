@@ -23,7 +23,7 @@ export const POST = handle(async (req: Request) => {
     .select("*")
     .single();
   if (error) throw error;
-  const { error: e2 } = await sb.from("content_briefs").insert({
+  const row = {
     user_id: user.id,
     project_id: project.id,
     topic: b.topic,
@@ -39,7 +39,15 @@ export const POST = handle(async (req: Request) => {
     language: b.language,
     reference_url: b.referenceUrl || null,
     user_keywords: b.keywords,
-  });
+    audience_type: b.audienceType,
+  };
+  let { error: e2 } = await sb.from("content_briefs").insert(row);
+  // database not migrated yet (0006): save without it rather than failing
+  if (e2 && /audience_type/.test(e2.message)) {
+    const { audience_type: _drop, ...rest } = row;
+    void _drop;
+    ({ error: e2 } = await sb.from("content_briefs").insert(rest));
+  }
   if (e2) {
     await sb.from("projects").delete().eq("id", project.id);
     throw e2;

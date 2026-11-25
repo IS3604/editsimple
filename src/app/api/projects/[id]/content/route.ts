@@ -5,7 +5,7 @@ import { getProject, selectedKeywords, setStage } from "@/lib/data";
 import { chatJSON } from "@/lib/ai/llm";
 import { ContentSchema, contentPrompt, editorPrompt, systemFor } from "@/lib/ai/prompts";
 import { readReference } from "@/lib/reference";
-import { nicheOf } from "@/lib/niches";
+import { audienceTypeOf, nicheOf } from "@/lib/niches";
 import { marketOf } from "@/lib/markets";
 import { TEMPLATES } from "@/lib/themes";
 import type { SlideKind } from "@/lib/types";
@@ -38,9 +38,10 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     const template = TEMPLATES[project.design?.template as keyof typeof TEMPLATES] ?? TEMPLATES.studio;
 
     let content = await chatJSON({
-      system: systemFor(niche, market),
+      system: systemFor(niche, market, audienceTypeOf(brief.audience_type)),
       user: contentPrompt({
         niche,
+        audienceType: audienceTypeOf(brief.audience_type),
         market,
         clientName: client?.display_name || client?.name || undefined,
         clientNotes: client?.notes || undefined,
@@ -66,7 +67,7 @@ export const POST = handle(async (_req: Request, { params }: Ctx) => {
     if (Date.now() - started < 30_000) {
       try {
         content = await chatJSON({
-          system: systemFor(niche, market),
+          system: systemFor(niche, market, audienceTypeOf(brief.audience_type)),
           user: editorPrompt(JSON.stringify(content), niche, market, keywords),
           schema: ContentSchema,
           temperature: 0.4,

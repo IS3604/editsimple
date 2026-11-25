@@ -1,7 +1,7 @@
 import "server-only";
 import { chatJSON } from "@/lib/ai/llm";
 import { KeywordIdeasSchema, ScoresSchema, keywordIdeasPrompt, systemFor, viralScoringPrompt } from "@/lib/ai/prompts";
-import type { Niche } from "@/lib/niches";
+import type { AudienceType, Niche } from "@/lib/niches";
 import { MARKETS, type MarketCode } from "@/lib/markets";
 import type { KeywordMetric, SourceStatus } from "@/lib/types";
 import { slugHashtag } from "@/lib/utils";
@@ -17,6 +17,7 @@ export type ResearchInput = {
   specialty?: string;
   platform: string;
   audience?: string;
+  audienceType?: AudienceType;
   userKeywords?: string[];
 };
 export type ResearchResult = { rows: KeywordMetric[]; sources: SourceStatus[] };
@@ -117,8 +118,8 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
   // AI search-phrase ideas (labelled)
   const ideas = await track(sources, "ai_suggestions", () =>
     chatJSON({
-      system: systemFor(input.niche, input.market),
-      user: keywordIdeasPrompt({ topic: input.topic, niche: input.niche, market: input.market, specialty: input.specialty, platform: input.platform, audience: input.audience, hotVideos: hot }),
+      system: systemFor(input.niche, input.market, input.audienceType),
+      user: keywordIdeasPrompt({ audienceType: input.audienceType, topic: input.topic, niche: input.niche, market: input.market, specialty: input.specialty, platform: input.platform, audience: input.audience, hotVideos: hot }),
       schema: KeywordIdeasSchema,
       temperature: 0.5,
     })
@@ -190,8 +191,8 @@ export async function runResearch(input: ResearchInput): Promise<ResearchResult>
   // Viral potential — AI estimate grounded on the measured signals above
   const scores = await track(sources, "ai_viral_score", () =>
     chatJSON({
-      system: systemFor(input.niche, input.market),
-      user: viralScoringPrompt(input.topic, input.niche, input.market, input.audience ?? "", rows),
+      system: systemFor(input.niche, input.market, input.audienceType),
+      user: viralScoringPrompt(input.topic, input.niche, input.market, input.audience ?? "", rows, input.audienceType),
       schema: ScoresSchema,
       temperature: 0.2,
     })

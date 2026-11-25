@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { Niche } from "@/lib/niches";
+import { audienceTypeOf, type AudienceType, type Niche } from "@/lib/niches";
 import { marketOf, type MarketCode } from "@/lib/markets";
 
 const KEY = "es-niche";
@@ -64,4 +64,35 @@ export function useMarket(): [MarketCode, (m: MarketCode) => void] {
     window.dispatchEvent(new Event(MEVT));
   };
   return [market, set];
+}
+
+const AKEY = "es-audience";
+const AEVT = "es-audience-change";
+
+/** Who posts are for: the client's patients/clients ("public") or the professionals themselves ("pros"). Remembered per browser. */
+export function useAudienceType(): [AudienceType, (a: AudienceType) => void] {
+  const [type, setState] = useState<AudienceType>("public");
+  useEffect(() => {
+    const read = () => {
+      try {
+        return audienceTypeOf(localStorage.getItem(AKEY));
+      } catch {
+        return "public" as AudienceType;
+      }
+    };
+    setState(read());
+    const on = () => setState(read());
+    window.addEventListener(AEVT, on);
+    return () => window.removeEventListener(AEVT, on);
+  }, []);
+  const set = (a: AudienceType) => {
+    try {
+      localStorage.setItem(AKEY, a);
+    } catch {
+      /* private mode */
+    }
+    setState(a);
+    window.dispatchEvent(new Event(AEVT));
+  };
+  return [type, set];
 }

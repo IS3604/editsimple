@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { getProject, selectedKeywords } from "@/lib/data";
 import { chatJSON } from "@/lib/ai/llm";
 import { CaptionSchema, captionPrompt, systemFor } from "@/lib/ai/prompts";
-import { nicheOf } from "@/lib/niches";
+import { audienceTypeOf, nicheOf } from "@/lib/niches";
 import { marketOf } from "@/lib/markets";
 
 export const maxDuration = 60;
@@ -29,7 +29,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
   const { keywords, hashtags } = await selectedKeywords(sb, id);
 
   const out = await chatJSON({
-    system: systemFor(nicheOf(brief.niche), marketOf(brief.market)),
+    system: systemFor(nicheOf(brief.niche), marketOf(brief.market), audienceTypeOf(brief.audience_type)),
     user: captionPrompt({
       niche: nicheOf(brief.niche),
       market: marketOf(brief.market),

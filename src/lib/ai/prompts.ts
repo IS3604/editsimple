@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { SLIDE_ICON_KEYS, type SlideIcon } from "@/lib/slide-icons";
-import { NICHES, rulesFor, type Niche } from "@/lib/niches";
+import { NICHES, nicheFor, rulesFor, type AudienceType, type Niche } from "@/lib/niches";
 import type { MarketCode } from "@/lib/markets";
 import type { KeywordMetric } from "@/lib/types";
 import { SLIDE_KINDS } from "@/lib/types";
@@ -89,11 +89,20 @@ export const TrendIdeasSchema = z.object({
  * EditSimple is a content agency: editors and writers producing posts on behalf of dermatology / aesthetic and lawyer clients,
  * most of them outside India. Every prompt is written from that seat.
  */
-export function systemFor(niche: Niche, market: MarketCode = "US") {
+/** Who a post speaks to. "pros" = the professionals themselves (B2B), e.g. doctors and practice owners. */
+export function readersLine(niche: Niche, type: AudienceType = "public") {
+  const n = NICHES[niche];
+  return type === "pros"
+    ? `READERS: ${n.pro.who} (professionals, not their ${n.pro.publicLabel.toLowerCase()}). Speak peer-to-peer and business-minded about ${n.pro.focus}. Give practical, specific advice a practice can act on this week. Never give clinical or legal advice about individual ${n.pro.publicLabel.toLowerCase()}.`
+    : `READERS: the client's ${n.pro.publicLabel.toLowerCase()} and the public — ordinary people, not professionals.`;
+}
+
+export function systemFor(niche: Niche, market: MarketCode = "US", type: AudienceType = "public") {
   const n = NICHES[niche];
   const r = rulesFor(niche, market);
   return `You are the senior content strategist at EditSimple, an agency that writes, designs and manages social content for ${n.whoPlural}.
-You are writing on behalf of a client ${n.who}, in the client's professional voice, for their audience in ${r.label}.
+${type === "pros" ? `You are writing posts aimed at ${n.pro.who} in ${r.label} — in the voice of the client account (often EditSimple itself or a practice speaking to peers).` : `You are writing on behalf of a client ${n.who}, in the client's professional voice, for their audience in ${r.label}.`}
+${readersLine(niche, type)}
 Context to use: ${r.context}. Spelling: ${r.spelling}. Currency: ${r.currency}.
 Your posts get saved and shared because they are specific, accurate and genuinely useful — never generic filler.
 Hard rules:
@@ -105,6 +114,7 @@ Hard rules:
 // ---------------- keyword research ----------------
 export function keywordIdeasPrompt(p: {
   topic: string;
+  audienceType?: AudienceType;
   niche: Niche;
   market: MarketCode;
   specialty?: string;
@@ -116,7 +126,8 @@ export function keywordIdeasPrompt(p: {
   const hot = (p.hotVideos ?? []).slice(0, 12);
   return `Topic: ${p.topic}
 Client: ${NICHES[p.niche].who}${p.specialty ? ` (${p.specialty})` : ""}, audience in ${r.label}.
-Platform: ${p.platform}. Audience: ${p.audience || "general public"}
+Platform: ${p.platform}. Audience: ${p.audience || (p.audienceType === "pros" ? NICHES[p.niche].pro.who : "general public")}
+${readersLine(p.niche, p.audienceType)}
 
 List up to 12 search phrases this audience actually types into Instagram and Google around the topic — the questions and worries that make people stop scrolling.
 Use ${r.spelling} and local terms for ${r.label}. Mix short "related" terms and 3–7 word "long_tail" questions ("what to do if…", "signs of…", "can my landlord…").
@@ -130,7 +141,7 @@ Never include numbers, volumes or popularity claims.
 JSON: {"keywords":[{"keyword","related_topic","kind","wikipedia_title"}],"hashtags":[...]}`;
 }
 
-export function viralScoringPrompt(topic: string, niche: Niche, market: MarketCode, audience: string, rows: KeywordMetric[]) {
+export function viralScoringPrompt(topic: string, niche: Niche, market: MarketCode, audience: string, rows: KeywordMetric[], type: AudienceType = "public") {
   const data = rows.map((r) => ({
     keyword: r.keyword,
     news_mentions_7d: r.news_mentions,
@@ -139,7 +150,7 @@ export function viralScoringPrompt(topic: string, niche: Niche, market: MarketCo
     youtube_engagement_pct: r.youtube_stats?.median_engagement_rate ?? null,
     monthly_searches: r.avg_monthly_searches,
   }));
-  return `Topic: ${topic}. Client type: ${NICHES[niche].who}. Market: ${rulesFor(niche, market).label}. Audience: ${audience || "general public"}.
+  return `Topic: ${topic}. Client type: ${NICHES[niche].who}. Market: ${rulesFor(niche, market).label}. Audience: ${audience || (type === "pros" ? NICHES[niche].pro.who : "general public")}.
 Measured signals (null = not available): ${JSON.stringify(data)}
 
 Estimate each keyword's VIRAL POTENTIAL on Instagram (0–100) as a post subject. Weigh:
@@ -150,22 +161,24 @@ JSON: {"scores":[{"keyword","score","rationale"}]}`;
 }
 
 // ---------------- AI suggestions while filling the brief ----------------
-export function ideasPrompt(p: { niche: Niche; market: MarketCode; specialty: string; audience: string; clientNotes?: string; headlines: string[] }) {
-  const n = NICHES[p.niche];
+export function ideasPrompt(p: { niche: Niche; market: MarketCode; specialty: string; audience: string; clientNotes?: string; headlines: string[]; audienceType?: AudienceType }) {
+  const n = { ...NICHES[p.niche], ...nicheFor(p.niche, p.audienceType ?? "public") };
   const r = rulesFor(p.niche, p.market);
   return `Suggest 6 post topics for our client, a ${n.who}${p.specialty ? ` specialising in ${p.specialty}` : ""} whose audience is in ${r.label}${p.audience ? ` (${p.audience})` : ""}.
 ${p.clientNotes ? `Client notes from the account manager: ${p.clientNotes}` : ""}
+${readersLine(p.niche, p.audienceType)}
 Make each topic specific and scroll-stopping (not "Tips for good health"). Mix evergreen topics with timely ones. Proven formats: ${n.formats.join("; ")}.
 ${p.headlines.length ? `This week's real headlines in ${r.label} (use 2–3 for timely ideas; never invent news): ${p.headlines.slice(0, 15).map((h, i) => `[${i}] ${h}`).join(" | ")}` : ""}
 For each: topic (≤ 12 words), angle (what makes it different), format, why (why this audience will save or share it).
 JSON: {"ideas":[{"topic","angle","format","why"}]}`;
 }
 
-export function briefPrompt(p: { niche: Niche; market: MarketCode; specialty: string; topic: string; audience: string; objective: string; clientNotes?: string }) {
+export function briefPrompt(p: { niche: Niche; market: MarketCode; specialty: string; topic: string; audience: string; objective: string; clientNotes?: string; audienceType?: AudienceType }) {
   const n = NICHES[p.niche];
   const r = rulesFor(p.niche, p.market);
   return `We're creating a post for our client, a ${n.who}${p.specialty ? ` (${p.specialty})` : ""} with an audience in ${r.label}. Topic: "${p.topic}". Current audience: ${p.audience || "not set"}. Objective: ${p.objective}.
 ${p.clientNotes ? `Client notes: ${p.clientNotes}` : ""}
+${readersLine(p.niche, p.audienceType)}
 Help the editor fill the brief:
 - sharper_topic: a specific, curiosity-driven working title (≤ 14 words), in ${r.spelling}.
 - audiences: 3 precise audience descriptions (who exactly needs this).
@@ -178,13 +191,14 @@ Help the editor fill the brief:
 JSON: {"sharper_topic","audiences":[],"objective","tone","keywords":[],"hooks":[],"slide_count","tip"}`;
 }
 
-export function trendIdeasPrompt(niche: Niche, market: MarketCode, headlines: { title: string; source: string }[]) {
-  const n = NICHES[niche];
+export function trendIdeasPrompt(niche: Niche, market: MarketCode, headlines: { title: string; source: string }[], type: AudienceType = "public") {
+  const n = { ...NICHES[niche], ...nicheFor(niche, type) };
   const r = rulesFor(niche, market);
   return `These are real news headlines from the last 7 days in ${r.label} (index: title — source):
 ${headlines.map((h, i) => `[${i}] ${h.title} — ${h.source}`).join("\n")}
 
-We create content for ${n.whoPlural}. Turn the most relevant headlines into up to 8 Instagram post ideas that explain what the news means for ordinary people.
+We create content for ${n.whoPlural}. Turn the most relevant headlines into up to 8 Instagram post ideas that explain what the news means for ${type === "pros" ? `${NICHES[niche].pro.who} and their practices` : "ordinary people"}.
+${readersLine(niche, type)}
 Skip celebrity gossip, politics without a practical angle, and anything that needs speculation.
 For each: topic (≤ 12 words), hook (cover line ≤ 12 words), format (one of: ${n.formats.join("; ")}), why_now (what happened, briefly), headline_refs (indexes used).
 JSON: {"ideas":[{"topic","hook","format","why_now","headline_refs":[]}]}`;
@@ -325,25 +339,28 @@ export function contentPrompt(p: {
   clientName?: string;
   clientNotes?: string;
   referenceNote?: string;
+  audienceType?: AudienceType;
 }) {
-  const n = NICHES[p.niche];
+  const n = { ...NICHES[p.niche], ...nicheFor(p.niche, p.audienceType ?? "public") };
   const r = rulesFor(p.niche, p.market);
   const focus = keywordFocus(p.topic, p.keywords);
+  const pros = p.audienceType === "pros";
   return `Write a ${p.slideCount}-slide Instagram/LinkedIn post for our client.
 Client: ${p.clientName || `a ${n.who}`}${p.specialty ? ` — ${p.specialty}` : ""}. Audience location: ${r.label}.
 ${p.clientNotes ? `Account notes (follow them): ${p.clientNotes}` : ""}
 ${focus.line}
 ${p.hook ? `Cover hook chosen by the editor (use it on slide 1, tighten wording if needed): "${p.hook}"` : ""}
-Audience: ${p.audience || "general public"}
+Audience: ${p.audience || (pros ? NICHES[p.niche].pro.who : "general public")}
+${readersLine(p.niche, p.audienceType)}
 Objective: ${p.objective}. Platform: ${p.platform}. Tone: ${p.tone}. Language: ${p.language} (${r.spelling} spelling if English).
 Proven formats for this niche: ${n.formats.join("; ")}
 ${p.referenceNote ? `Reference context: ${p.referenceNote}` : ""}
 
 First decide the single sharpest angle (who exactly, which situation, what they get wrong). Then plan the slides, then write.
 Quality bar — every slide must pass:
-- Easy to understand: write for a smart 14-year-old. Plain words, short sentences. Explain any medical or legal term in plain words the first time it appears (e.g. "neurotoxin (a muscle-relaxing injection)").
+- Easy to understand: ${pros ? "write like a sharp colleague: plain, direct, no fluff; industry terms are fine, marketing jargon is not" : "write for a smart 14-year-old. Plain words, short sentences. Explain any medical or legal term in plain words the first time it appears (e.g. \"neurotoxin (a muscle-relaxing injection)\")"}.
 - Meaningful on its own: each heading states the point of the slide, so a reader skimming only headings still learns the whole story.
-- Specific: names a real situation, treatment, symptom, document, right, deadline or habit relevant to ${r.label}. No vague advice ("stay healthy", "know your rights", "consult a professional" as the only point).
+- Specific: names a real ${pros ? "practice situation, channel, metric, patient question, workflow or rule" : "situation, treatment, symptom, document, right, deadline or habit"} relevant to ${r.label}. No vague advice ("stay healthy", "know your rights", "consult a professional" as the only point).
 - Accurate and balanced: describe typical ranges ("often", "usually", "for many people") rather than promises; no invented numbers.
 - One idea per slide. Readers should learn things they can act on today.
 - The cover must make the target person feel "this is about me" and promise exactly what the slides deliver.

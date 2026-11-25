@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handle } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
-import { NICHES, nicheOf, type Niche } from "@/lib/niches";
+import { audienceTypeOf, nicheFor, nicheOf, type AudienceType, type Niche } from "@/lib/niches";
 import { nicheHeadlines, type NewsItem } from "@/lib/research/news";
 import { nichePopularVideos, youtubeConfigured, type VideoStat } from "@/lib/research/youtube";
 import { chatJSON } from "@/lib/ai/llm";
@@ -15,6 +15,7 @@ type Idea = { topic: string; hook: string; format: string; why_now: string; head
 export type TrendingPayload = {
   niche: Niche;
   market: MarketCode;
+  audienceType: AudienceType;
   headlines: NewsItem[];
   ideas: Idea[];
   videos: VideoStat[] | null;
@@ -32,12 +33,13 @@ export const GET = handle(async (req: Request) => {
   const url = new URL(req.url);
   const niche = nicheOf(url.searchParams.get("niche"));
   const market = marketOf(url.searchParams.get("market"));
-  const key = `${niche}:${market}`;
+  const audienceType = audienceTypeOf(url.searchParams.get("audience"));
+  const key = `${niche}:${market}:${audienceType}`;
   const fresh = url.searchParams.get("refresh") === "1";
   const hit = cache.get(key);
   if (!fresh && hit && Date.now() - hit.at < TTL) return NextResponse.json(hit.data);
 
-  const n = NICHES[niche];
+  const n = nicheFor(niche, audienceType);
   const sources: SourceStatus[] = [];
   const t = () => new Date().toISOString();
 
@@ -60,8 +62,8 @@ export const GET = handle(async (req: Request) => {
   if (headlines.length) {
     try {
       const out = await chatJSON({
-        system: systemFor(niche, market),
-        user: trendIdeasPrompt(niche, market, headlines.slice(0, 25)),
+        system: systemFor(niche, market, audienceType),
+        user: trendIdeasPrompt(niche, market, headlines.slice(0, 25), audienceType),
         schema: TrendIdeasSchema,
         temperature: 0.6,
       });
@@ -78,7 +80,7 @@ export const GET = handle(async (req: Request) => {
     }
   }
 
-  const data: TrendingPayload = { niche, market, headlines, ideas, videos, sources, region: MARKETS[market].label, fetched_at: t() };
+  const data: TrendingPayload = { niche, market, audienceType, headlines, ideas, videos, sources, region: MARKETS[market].label, fetched_at: t() };
   if (headlines.length || videos?.length) cache.set(key, { at: Date.now(), data });
   return NextResponse.json(data);
 });

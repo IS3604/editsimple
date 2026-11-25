@@ -11,10 +11,10 @@ import { ImportTemplateButton } from "@/components/import-template";
 import { MARKETS, MARKET_CODES, marketOf, type MarketCode } from "@/lib/markets";
 import { clientDesign, type Client } from "@/lib/clients";
 import { api } from "@/lib/api-client";
-import { NICHES, type Niche } from "@/lib/niches";
+import { NICHES, nicheFor, type AudienceType, type Niche } from "@/lib/niches";
 import type { BriefInput, Design, KeywordMetric, SourceStatus } from "@/lib/types";
 import { defaultDesign, nicheDefaultTemplate } from "@/lib/themes";
-import { useMarket, useNiche } from "@/lib/use-niche";
+import { useAudienceType, useMarket, useNiche } from "@/lib/use-niche";
 import { cn } from "@/lib/utils";
 
 type Idea = { topic: string; angle: string; format: string; why: string };
@@ -27,6 +27,11 @@ export default function CreatePage() {
   const router = useRouter();
   const [wsNiche, setWsNiche] = useNiche();
   const [wsMarket, setWsMarket] = useMarket();
+  const [wsAudience, setWsAudience] = useAudienceType();
+  // follow the sidebar's "Posts for" switch (it loads from the browser after the first render)
+  useEffect(() => {
+    setForm((f) => (f.audienceType === wsAudience ? f : { ...f, audienceType: wsAudience, audience: "" }));
+  }, [wsAudience]);
   const [clients, setClients] = useState<Client[]>([]);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
@@ -38,6 +43,7 @@ export default function CreatePage() {
     topic: "",
     hook: "",
     audience: "",
+    audienceType: "public" as AudienceType,
     platform: "instagram" as BriefInput["platform"],
     slideCount: 6,
     objective: "education" as BriefInput["objective"],
@@ -57,7 +63,7 @@ export default function CreatePage() {
     inited.current = true;
     const q = new URLSearchParams(window.location.search);
     const n = (q.get("niche") === "legal" ? "legal" : q.get("niche") === "medical" ? "medical" : null) ?? wsNiche;
-    setForm((f) => ({ ...f, niche: n, market: wsMarket, topic: (q.get("topic") ?? "").slice(0, 200), hook: (q.get("hook") ?? "").slice(0, 140), design: defaultDesign(nicheDefaultTemplate(n)) }));
+    setForm((f) => ({ ...f, niche: n, market: wsMarket, audienceType: wsAudience, topic: (q.get("topic") ?? "").slice(0, 200), hook: (q.get("hook") ?? "").slice(0, 140), design: defaultDesign(nicheDefaultTemplate(n)) }));
     const wanted = q.get("client");
     api<{ brands: Client[] }>("/api/brand")
       .then(({ brands }) => {
@@ -107,14 +113,14 @@ export default function CreatePage() {
   const loadIdeas = useCallback(async () => {
     setIdeasBusy(true);
     try {
-      const r = await api<{ ideas: Idea[] }>("/api/suggest", { method: "POST", json: { mode: "ideas", niche: form.niche, market: form.market, specialty: form.specialty, audience: form.audience, clientNotes: form.clientNotes } });
+      const r = await api<{ ideas: Idea[] }>("/api/suggest", { method: "POST", json: { mode: "ideas", niche: form.niche, market: form.market, specialty: form.specialty, audience: form.audience, audienceType: form.audienceType, clientNotes: form.clientNotes } });
       setIdeas(r.ideas);
     } catch {
       setIdeas([]);
     } finally {
       setIdeasBusy(false);
     }
-  }, [form.niche, form.market, form.specialty, form.audience, form.clientNotes]);
+  }, [form.niche, form.market, form.specialty, form.audience, form.audienceType, form.clientNotes]);
 
   // ---------- AI: brief help (debounced on topic) ----------
   const [help, setHelp] = useState<BriefHelp | null>(null);
@@ -127,7 +133,7 @@ export default function CreatePage() {
       helpFor.current = t;
       setHelpBusy(true);
       try {
-        setHelp(await api<BriefHelp>("/api/suggest", { method: "POST", json: { mode: "brief", niche: form.niche, market: form.market, specialty: form.specialty, topic: t, audience: form.audience, objective: form.objective, clientNotes: form.clientNotes } }));
+        setHelp(await api<BriefHelp>("/api/suggest", { method: "POST", json: { mode: "brief", niche: form.niche, market: form.market, specialty: form.specialty, topic: t, audience: form.audience, audienceType: form.audienceType, objective: form.objective, clientNotes: form.clientNotes } }));
       } catch {
         /* suggestions are optional */
       } finally {
@@ -135,7 +141,7 @@ export default function CreatePage() {
       }
     }, 1200);
     return () => clearTimeout(timer);
-  }, [form.topic, form.niche, form.market, form.specialty, form.audience, form.objective, form.clientNotes]);
+  }, [form.topic, form.niche, form.market, form.specialty, form.audience, form.audienceType, form.objective, form.clientNotes]);
 
   // ---------- project + research ----------
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -147,7 +153,7 @@ export default function CreatePage() {
   const [focus, setFocus] = useState<string | null>(null);
   const [custom, setCustom] = useState("");
 
-  const sig = JSON.stringify([form.niche, form.market, form.clientId, form.specialty, form.topic, form.hook, form.audience, form.platform, form.slideCount, form.objective, form.tone, form.language, form.keywords, form.size]);
+  const sig = JSON.stringify([form.niche, form.market, form.audienceType, form.clientId, form.specialty, form.topic, form.hook, form.audience, form.platform, form.slideCount, form.objective, form.tone, form.language, form.keywords, form.size]);
 
   async function startResearch(pid: string) {
     setResearching(true);
@@ -155,7 +161,7 @@ export default function CreatePage() {
     try {
       const r = await api<{ research: { id: string; sources: SourceStatus[] }; rows: Row[] }>("/api/keywords", {
         method: "POST",
-        json: { topic: form.topic, niche: form.niche, market: form.market, specialty: form.specialty, platform: form.platform, audience: form.audience, userKeywords: form.keywords, projectId: pid },
+        json: { topic: form.topic, niche: form.niche, market: form.market, specialty: form.specialty, platform: form.platform, audience: form.audience, audienceType: form.audienceType, userKeywords: form.keywords, projectId: pid },
       });
       setResearch({ id: r.research.id, rows: r.rows, sources: r.research.sources });
       setFocus(r.rows.find((x) => x.kind === "seed")?.keyword ?? null);
@@ -231,7 +237,8 @@ export default function CreatePage() {
     if (r) setResearch({ ...research, rows: r.rows });
   }
 
-  const n = NICHES[form.niche];
+  const n = { ...NICHES[form.niche], ...nicheFor(form.niche, form.audienceType) };
+  const proLabels = NICHES[form.niche].pro;
   const coverSlide = useMemo(
     () => ({
       id: "preview-cover",
@@ -302,6 +309,17 @@ export default function CreatePage() {
                     ))}
                   </div>
                 </Field>
+                <Field label="Who is this post for?" className="mt-6" hint={form.audienceType === "pros" ? `Written for ${proLabels.who}: practice growth, marketing, industry news.` : `Written for the client's ${proLabels.publicLabel.toLowerCase()}.`}>
+                  <Segmented
+                    className="w-full sm:max-w-sm"
+                    value={form.audienceType}
+                    onChange={(v: AudienceType) => { set("audienceType", v); setWsAudience(v); set("audience", ""); setIdeas(null); setHelp(null); helpFor.current = ""; }}
+                    options={[
+                      { value: "public", label: proLabels.publicLabel },
+                      { value: "pros", label: proLabels.label },
+                    ]}
+                  />
+                </Field>
                 <div className="mt-6 grid gap-5 sm:grid-cols-3">
                   <Field label="Client type">
                     <Segmented
@@ -342,7 +360,15 @@ export default function CreatePage() {
                       maxLength={200}
                       value={form.topic}
                       onChange={(e) => set("topic", e.target.value)}
-                      placeholder={form.niche === "legal" ? "e.g. What tenants can do when the deposit isn't returned" : "e.g. Heart attack signs women often miss"}
+                      placeholder={
+                        form.audienceType === "pros"
+                          ? form.niche === "legal"
+                            ? "e.g. What clients search before hiring a lawyer"
+                            : "e.g. Why med spa Reels don't turn into bookings"
+                          : form.niche === "legal"
+                          ? "e.g. What tenants can do when the deposit isn't returned"
+                          : "e.g. Botox or fillers: which one do you need?"
+                      }
                       className="min-h-[76px] text-[19px] font-medium leading-snug tracking-[-0.015em] placeholder:font-normal placeholder:text-[15px] placeholder:tracking-normal"
                     />
                   </Field>

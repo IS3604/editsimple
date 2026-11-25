@@ -6,7 +6,8 @@ import { FolderOpen, Globe, Globe2, Home, ShieldCheck, LogOut, Menu, Newspaper, 
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { ToastProvider } from "@/components/feedback";
 import { PushPrompt } from "@/components/push";
-import { useMarket, useNiche } from "@/lib/use-niche";
+import { useAudienceType, useMarket, useNiche } from "@/lib/use-niche";
+import { NICHES } from "@/lib/niches";
 import { MARKETS, MARKET_CODES, type MarketCode } from "@/lib/markets";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +70,39 @@ export function NicheSwitch({ className }: { className?: string }) {
   );
 }
 
+/** Who posts are written for: the client's patients/clients, or doctors/lawyers themselves (B2B). */
+export function AudienceSwitch({ className }: { className?: string }) {
+  const [niche] = useNiche();
+  const [type, setType] = useAudienceType();
+  const pro = NICHES[niche].pro;
+  return (
+    <div className={className}>
+      <p className="mb-1 px-1 text-[11px] font-medium uppercase tracking-[.08em] text-muted-foreground">Posts for</p>
+      <div className="grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1" role="radiogroup" aria-label="Posts for">
+        {(
+          [
+            ["public", pro.publicLabel],
+            ["pros", pro.label],
+          ] as const
+        ).map(([v, label]) => (
+          <button
+            key={v}
+            role="radio"
+            aria-checked={type === v}
+            onClick={() => setType(v)}
+            className={cn(
+              "rounded-lg py-1.5 text-[13px] font-medium transition-all",
+              type === v ? "bg-card text-accent shadow-[0_1px_3px_rgb(15_18_30/.12)]" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Shown only to people on the EditSimple Website team (eds_is_admin). */
 const WEBSITE = { href: "/website", label: "Website", icon: Globe };
 /** Shown only to Studio admins (is_app_admin): invites and accounts. */
@@ -111,6 +145,7 @@ export function AppShell({ email, websiteAdmin = false, studioAdmin = false, chi
 
         <div className="mt-5 space-y-2 px-1">
           <NicheSwitch />
+          <AudienceSwitch />
           <MarketSelect />
         </div>
 

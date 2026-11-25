@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { getProject, selectedKeywords } from "@/lib/data";
 import { chatJSON } from "@/lib/ai/llm";
 import { SlideCopySchema, regenerateSlidePrompt, systemFor } from "@/lib/ai/prompts";
-import { nicheOf } from "@/lib/niches";
+import { audienceTypeOf, nicheOf } from "@/lib/niches";
 import { marketOf } from "@/lib/markets";
 
 export const maxDuration = 60;
@@ -27,7 +27,7 @@ export const POST = handle(async (req: Request, { params }: Ctx) => {
   const { keywords } = await selectedKeywords(sb, id);
 
   const copy = await chatJSON({
-    system: systemFor(nicheOf(brief.niche), marketOf(brief.market)),
+    system: systemFor(nicheOf(brief.niche), marketOf(brief.market), audienceTypeOf(brief.audience_type)),
     user: regenerateSlidePrompt({
       niche: nicheOf(brief.niche),
       market: marketOf(brief.market),

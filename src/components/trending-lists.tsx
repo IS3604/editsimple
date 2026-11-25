@@ -5,6 +5,7 @@ import { ExternalLink, PenLine, RefreshCw } from "lucide-react";
 import { AiTag, Button, ErrorBanner, Skeleton } from "@/components/ui";
 import { Sources } from "@/components/keywords";
 import { api } from "@/lib/api-client";
+import { useAudienceType } from "@/lib/use-niche";
 import type { Niche } from "@/lib/niches";
 import type { SourceStatus } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
@@ -23,16 +24,17 @@ export function useTrending(niche: Niche, market: string = "US") {
   const [data, setData] = useState<Trending | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [audience] = useAudienceType();
   const load = useCallback(
     (refresh = false) => {
       setError(null);
       setLoading(true);
-      api<Trending>(`/api/trending?niche=${niche}&market=${market}${refresh ? "&refresh=1" : ""}`)
+      api<Trending>(`/api/trending?niche=${niche}&market=${market}&audience=${audience}${refresh ? "&refresh=1" : ""}`)
         .then((d) => setData(d))
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false));
     },
-    [niche, market]
+    [niche, market, audience]
   );
   useEffect(() => {
     setData(null);

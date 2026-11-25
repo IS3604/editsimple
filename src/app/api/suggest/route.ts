@@ -4,7 +4,7 @@ import { handle } from "@/lib/http";
 import { requireUser } from "@/lib/supabase/server";
 import { chatJSON } from "@/lib/ai/llm";
 import { SuggestBriefSchema, SuggestIdeasSchema, briefPrompt, ideasPrompt, systemFor } from "@/lib/ai/prompts";
-import { NICHES } from "@/lib/niches";
+import { nicheFor } from "@/lib/niches";
 import { MARKET_CODES, type MarketCode } from "@/lib/markets";
 import { nicheHeadlines } from "@/lib/research/news";
 
@@ -16,6 +16,7 @@ const common = {
   specialty: z.string().max(80).default(""),
   audience: z.string().max(200).default(""),
   clientNotes: z.string().max(600).default(""),
+  audienceType: z.enum(["public", "pros"]).default("public"),
 };
 
 const SuggestBody = z.discriminatedUnion("mode", [
@@ -31,20 +32,20 @@ export const POST = handle(async (req: Request) => {
   const b = SuggestBody.parse(await req.json());
 
   if (b.mode === "ideas") {
-    const key = `${b.niche}:${b.market}`;
+    const key = `${b.niche}:${b.market}:${b.audienceType}`;
     let titles: string[] = [];
     const c = headlineCache.get(key);
     if (c && Date.now() - c.at < 3600_000) titles = c.titles;
     else {
       try {
-        titles = (await nicheHeadlines(NICHES[b.niche].newsQueries.slice(0, 3), 15, b.market)).map((h) => h.title);
+        titles = (await nicheHeadlines(nicheFor(b.niche, b.audienceType).newsQueries.slice(0, 3), 15, b.market)).map((h) => h.title);
         headlineCache.set(key, { at: Date.now(), titles });
       } catch {
         /* ideas still work without news */
       }
     }
     const out = await chatJSON({
-      system: systemFor(b.niche, b.market),
+      system: systemFor(b.niche, b.market, b.audienceType),
       user: ideasPrompt({ ...b, headlines: titles }),
       schema: SuggestIdeasSchema,
       temperature: 0.85,
@@ -53,7 +54,7 @@ export const POST = handle(async (req: Request) => {
   }
 
   const out = await chatJSON({
-    system: systemFor(b.niche, b.market),
+    system: systemFor(b.niche, b.market, b.audienceType),
     user: briefPrompt(b),
     schema: SuggestBriefSchema,
     temperature: 0.6,

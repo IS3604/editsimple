@@ -97,3 +97,22 @@ describe("slide design", () => {
     for (const k of ["list", "steps", "checklist", "highlight", "cta", "statement"]) expect(SLIDE_ICONS[defaultIcon(k)]).toBeTruthy();
   });
 });
+
+describe("posts for doctors (B2B) as well as patients", () => {
+  it("switches readers, news and formats to the professionals", async () => {
+    const { nicheFor, audienceTypeOf } = await import("@/lib/niches");
+    const { systemFor, trendIdeasPrompt, ideasPrompt, contentPrompt } = await import("@/lib/ai/prompts");
+    expect(audienceTypeOf("pros")).toBe("pros");
+    expect(audienceTypeOf("x")).toBe("public");
+    const pro = nicheFor("medical", "pros");
+    expect(pro.newsQueries.join(" ").toLowerCase()).toContain("med spa");
+    expect(pro.audiences[0]).toMatch(/practice/i);
+    expect(systemFor("medical", "US", "pros")).toContain("professionals, not their patients");
+    expect(systemFor("medical", "US")).toContain("ordinary people");
+    expect(trendIdeasPrompt("medical", "US", [{ title: "t", source: "s" }], "pros")).toContain("and their practices");
+    expect(ideasPrompt({ niche: "medical", market: "US", specialty: "", audience: "", headlines: [], audienceType: "pros" })).toContain("Mistakes practices make");
+    const base = { niche: "medical" as const, market: "US" as const, specialty: "", topic: "YouTube for med spas", audience: "", objective: "education", tone: "", language: "English", platform: "instagram", slideCount: 5, keywords: [], templateLabel: "Studio" };
+    expect(contentPrompt({ ...base, audienceType: "pros" })).toContain("write like a sharp colleague");
+    expect(contentPrompt(base)).toContain("smart 14-year-old");
+  });
+});

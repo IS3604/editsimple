@@ -18,6 +18,17 @@ export const NICHES: Record<
     formats: string[];
     compliance: string;
     disclaimer: string;
+    /** Posts aimed at the professionals themselves (B2B): practice owners, not their patients/clients. */
+    pro: {
+      label: string; // e.g. "Doctors"
+      publicLabel: string; // e.g. "Patients"
+      who: string;
+      audiences: string[];
+      newsQueries: string[];
+      youtubeQuery: string;
+      formats: string[];
+      focus: string;
+    };
   }
 > = {
   medical: {
@@ -55,6 +66,35 @@ export const NICHES: Record<
     compliance:
       "Educational only. No diagnosis or individual treatment advice, no dosages or unit counts as advice, no guaranteed results or 'no downtime' claims, no superiority claims, no before-and-after or patient stories without consent, no body shaming or fear-mongering. Encourage an in-person consultation with a qualified clinician.",
     disclaimer: "For general education only. Not medical advice. Results vary; consult a qualified clinician.",
+    pro: {
+      label: "Doctors",
+      publicLabel: "Patients",
+      who: "dermatologists, plastic surgeons, aesthetic doctors, med spa owners and practice managers",
+      audiences: [
+        "Dermatology practice owners", "Plastic surgeons growing a private practice", "Med spa owners and managers",
+        "Aesthetic doctors starting on social media", "Practice managers running marketing", "Cosmetic clinics in a competitive city",
+      ],
+      newsQueries: [
+        "\"med spa\" industry OR \"medical spa\" business",
+        "\"aesthetic practice\" OR \"aesthetics industry\"",
+        "dermatology practice OR \"dermatology group\"",
+        "\"plastic surgery\" practice OR \"cosmetic surgery\" industry",
+        "healthcare marketing OR \"patient acquisition\"",
+        "Botox OR injectables market OR FDA aesthetic",
+      ],
+      youtubeQuery: "med spa marketing",
+      formats: [
+        "Mistakes practices make on social media",
+        "What patients actually search before booking",
+        "Behind the strategy (how a practice grows with video)",
+        "Industry news: what it means for your practice",
+        "Checklist for a better consult or patient journey",
+        "Myth vs fact about marketing a practice",
+        "Do vs don't for advertising compliance",
+      ],
+      focus:
+        "growing the practice: patient acquisition and trust, YouTube and social video, what patients search for, reviews and reputation, consult conversion, patient experience, pricing communication, advertising compliance, industry news and trends",
+    },
   },
   legal: {
     label: "Lawyers",
@@ -87,6 +127,23 @@ export const NICHES: Record<
     compliance:
       "Educational legal information only. No advice on a specific person's case, no promised outcomes, no 'best lawyer' or superiority claims, no fee offers, no pressure. Cite statutes only when certain and name the jurisdiction; otherwise explain the principle and note that laws vary.",
     disclaimer: "General information only, not legal advice. Laws vary by location.",
+    pro: {
+      label: "Lawyers",
+      publicLabel: "Clients",
+      who: "lawyers, law-firm partners and legal marketers",
+      audiences: ["Solo lawyers building a practice", "Law-firm partners", "Legal marketing managers", "Young lawyers growing a personal brand"],
+      newsQueries: ["\"law firm\" marketing OR \"legal marketing\"", "\"law firm\" business OR \"legal industry\"", "lawyer advertising rules OR \"bar association\" advertising", "legal technology OR \"legal tech\""],
+      youtubeQuery: "law firm marketing",
+      formats: [
+        "Mistakes law firms make on social media",
+        "What clients search before hiring a lawyer",
+        "Industry news: what it means for your firm",
+        "Do vs don't for lawyer advertising rules",
+        "Checklist for a better client intake",
+      ],
+      focus:
+        "growing the firm: client acquisition and trust, video and social content, what clients search for, reviews and reputation, intake and conversion, advertising rules for lawyers, legal-industry news",
+    },
   },
 };
 
@@ -102,4 +159,14 @@ export function rulesFor(niche: Niche, market: MarketCode) {
     currency: m.currency,
     label: m.label,
   };
+}
+
+export type AudienceType = "public" | "pros";
+export const audienceTypeOf = (v: unknown): AudienceType => (v === "pros" ? "pros" : "public");
+
+/** The niche as seen for a given audience: posts for patients/clients (default) or for the professionals themselves. */
+export function nicheFor(niche: Niche, type: AudienceType) {
+  const n = NICHES[niche];
+  if (type !== "pros") return { audiences: n.audiences, newsQueries: n.newsQueries, youtubeQuery: n.youtubeQuery, formats: n.formats, readers: n.pro.publicLabel.toLowerCase() };
+  return { audiences: n.pro.audiences, newsQueries: n.pro.newsQueries, youtubeQuery: n.pro.youtubeQuery, formats: n.pro.formats, readers: n.pro.who };
 }

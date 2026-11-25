@@ -14,6 +14,7 @@ const Body = z.object({
   specialty: z.string().trim().max(80).optional().default(""),
   platform: z.enum(["instagram", "linkedin", "both"]).default("instagram"),
   audience: z.string().trim().max(200).optional().default(""),
+  audienceType: z.enum(["public", "pros"]).default("public"),
   userKeywords: z.array(z.string().trim().min(1).max(80)).max(15).default([]),
   projectId: z.string().uuid().optional(),
 });

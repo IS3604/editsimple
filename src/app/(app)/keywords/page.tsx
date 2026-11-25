@@ -6,8 +6,8 @@ import { PageHeader } from "@/components/app-shell";
 import { Button, Empty, ErrorBanner, Field, Input, Select, Skeleton } from "@/components/ui";
 import { DataNotice, HashtagPicker, KeywordDetail, KeywordTable, Sources } from "@/components/keywords";
 import { api } from "@/lib/api-client";
-import { NICHES } from "@/lib/niches";
-import { useMarket, useNiche } from "@/lib/use-niche";
+import { NICHES, nicheFor } from "@/lib/niches";
+import { useAudienceType, useMarket, useNiche } from "@/lib/use-niche";
 import type { KeywordMetric, SourceStatus } from "@/lib/types";
 
 type Run = { id: string; topic: string; created_at: string; project_id: string | null };
@@ -16,6 +16,7 @@ type Res = { research: { id: string; topic: string; created_at: string; sources:
 export default function KeywordsPage() {
   const [niche] = useNiche();
   const [market] = useMarket();
+  const [audienceType] = useAudienceType();
   const [topic, setTopic] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [audience, setAudience] = useState("");
@@ -42,7 +43,7 @@ export default function KeywordsPage() {
     setBusy(true);
     setError(null);
     try {
-      show(await api<Res>("/api/keywords", { method: "POST", json: { topic, niche, market, specialty, audience, platform: "instagram" } }));
+      show(await api<Res>("/api/keywords", { method: "POST", json: { topic, niche, market, specialty, audience, audienceType, platform: "instagram" } }));
       loadRuns();
     } catch (err) {
       setError((err as Error).message);
@@ -72,7 +73,7 @@ export default function KeywordsPage() {
             {NICHES[niche].specialties.map((s) => <option key={s}>{s}</option>)}
           </Select>
         </Field>
-        <Field label="Audience"><Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder={NICHES[niche].audiences[0]} /></Field>
+        <Field label="Audience"><Input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder={nicheFor(niche, audienceType).audiences[0]} /></Field>
         <Button type="submit" variant="accent" loading={busy}>{!busy && <Search className="h-4 w-4" />}Research</Button>
       </form>
       <ErrorBanner error={error} />
